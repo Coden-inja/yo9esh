@@ -13,7 +13,7 @@ const { note } = Astro.props;
 const { Content } = await render(note);
 const graph = note.data.system ? noteDiagrams[note.data.system] : undefined;
 ---
-<Base title={`${note.data.title} · ${person.name}`} description={note.data.description}>
+<Base title={`${note.data.title} · ${person.name}`} description={note.data.description} type="article">
   <article class="wrap note">
     <a class="back mono" href="/#notes">← Systems notebook</a>
     <p class="eyebrow">{note.data.tag} · adapted from my LinkedIn post</p>

@@ -15,12 +15,21 @@ Everything lives in **`src/data/profile.ts`**: case studies, diagrams, recogniti
 ## Commands
 
 ```sh
-npm run dev         # localhost:4321
-npm run build       # → dist/
-npm run resume:pdf  # rebuilds and prints /resume → public/yogesh-kumar-resume.pdf
+npm run dev      # localhost:4321
+npm run build    # → dist/
+npm run assets   # rebuilds, then renders with headless Chrome:
+                 #   /resume → public/yogesh-kumar-resume.pdf
+                 #   /og     → public/og.jpg (1200×630 link-preview card)
+                 #   favicon → public/apple-touch-icon.png
 ```
 
-Run `resume:pdf` after changing `profile.ts`, and commit the PDF.
+Run `assets` after changing `profile.ts` or the card in `src/pages/og.astro`, and commit `public/`.
+
+## SEO and link previews
+
+`src/layouts/Base.astro` sets the canonical URL, Open Graph and Twitter tags (image: `og.jpg`), and Person structured data on the home page. `@astrojs/sitemap` writes `sitemap-index.xml`, and `public/robots.txt` points to it.
+
+WhatsApp and LinkedIn cache previews. After changing the card, refresh it with the [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/). WhatsApp picks up the change for new shares after a while.
 
 ## Deploy
 
