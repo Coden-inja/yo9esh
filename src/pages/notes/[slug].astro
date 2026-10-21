@@ -1,0 +1,43 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Flow from '../../components/Flow.astro';
+import { systems, person } from '../../data/profile';
+
+export async function getStaticPaths() {
+  const notes = await getCollection('notes');
+  return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+const system = systems.find((s) => s.id === note.data.system);
+---
+<Base title={`${note.data.title} · ${person.name}`} description={note.data.description}>
+  <article class="wrap note">
+    <a class="back mono" href="/#notes">← Systems notebook</a>
+    <p class="eyebrow">{note.data.tag} · originally on LinkedIn</p>
+    <h1>{note.data.title}</h1>
+    <p class="lede">{note.data.description}</p>
+    {system && <div class="diagram"><Flow stages={system.diagram} /></div>}
+    <div class="prose"><Content /></div>
+    <p class="sig">— {person.name.split(' ')[0]}</p>
+  </article>
+</Base>
+
+<style>
+  .note { max-width: 760px; padding-top: clamp(32px, 6vw, 64px); padding-bottom: 96px; }
+  .back { display: inline-block; font-size: 0.8rem; color: var(--muted); text-decoration: none; margin-bottom: 40px; }
+  h1 { font-size: clamp(2.4rem, 6.5vw, 3.8rem); margin: 12px 0 20px; }
+  .lede { font-size: 1.2rem; color: var(--ink-2); margin: 0 0 40px; }
+  .diagram { margin: 0 0 40px; }
+  .prose { font-size: 1.06rem; }
+  .prose :global(h2) { font-size: 2rem; margin: 48px 0 12px; }
+  .prose :global(p), .prose :global(li) { color: var(--ink-2); }
+  .prose :global(strong) { color: var(--ink); }
+  .prose :global(li) { margin: 6px 0; }
+  .prose :global(code) { font-family: var(--mono); font-size: 0.85em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+  .prose :global(pre) { font-family: var(--mono); font-size: 0.85rem; line-height: 1.5; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface) !important; color: var(--ink) !important; overflow-x: auto; }
+  .prose :global(pre code) { background: none; padding: 0; }
+  .sig { font-family: var(--serif); font-style: italic; font-size: 1.5rem; color: var(--accent-ink); margin-top: 48px; }
+</style>

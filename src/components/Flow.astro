@@ -1,0 +1,94 @@
+---
+import type { Stage } from '../data/profile';
+
+interface Props { stages: Stage[]; compact?: boolean }
+const { stages, compact = false } = Astro.props;
+
+const label = stages
+  .map((s) => s.nodes.map((n) => n.label + (n.detail ? ` (${n.detail})` : '')).join(' + '))
+  .join(' → ');
+---
+<div class:list={['flow', { compact }]} role="img" aria-label={`System diagram: ${label}`}>
+  {stages.map((s, i) => (
+    <Fragment>
+      {i > 0 && (
+        <div class="link" aria-hidden="true">
+          {s.via && <span class="via">{s.via}</span>}
+          <i class="packet" style={`animation-delay:${(i * 0.45).toFixed(2)}s`} />
+        </div>
+      )}
+      <div class="stage">
+        {s.nodes.map((n) => (
+          <div class:list={['node', { accent: n.accent }]}>
+            <b>{n.label}</b>
+            {n.detail && <span>{n.detail}</span>}
+          </div>
+        ))}
+      </div>
+    </Fragment>
+  ))}
+</div>
+
+<style>
+  .flow {
+    --link: 66px;
+    display: flex; align-items: stretch;
+    padding: 22px; border: 1px solid var(--line); border-radius: var(--radius);
+    background:
+      radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0) 0 0 / 18px 18px,
+      var(--surface);
+  }
+  .stage { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+  .node {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 10px 12px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--line);
+    box-shadow: 0 1px 0 var(--line);
+  }
+  .node b { font: 600 0.8rem/1.25 var(--mono); color: var(--ink); }
+  .node span { font-size: 0.72rem; line-height: 1.35; color: var(--muted); }
+  .node.accent { border-color: var(--accent); background: var(--accent-soft); }
+  .node.accent b { color: var(--accent-ink); }
+
+  .link { flex: 0 0 var(--link); position: relative; display: flex; align-items: center; justify-content: center; }
+  .link::before { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; border-top: 1.5px dashed var(--muted); opacity: .55; }
+  .link::after {
+    content: ''; position: absolute; right: 2px; top: calc(50% - 4px);
+    border: 4px solid transparent; border-left: 6px solid var(--muted); border-right: 0; opacity: .7;
+  }
+  .via {
+    position: absolute; bottom: calc(50% + 6px); left: 50%; transform: translateX(-50%);
+    font: 0.62rem/1 var(--mono); color: var(--muted); white-space: nowrap;
+    background: var(--surface); padding: 2px 4px; border-radius: 4px;
+  }
+  .packet {
+    position: absolute; top: calc(50% - 3px); left: 4px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+    animation: travel 2.4s cubic-bezier(.5,0,.5,1) infinite;
+  }
+  @keyframes travel {
+    0% { left: 4px; opacity: 0; }
+    15% { opacity: 1; }
+    70% { left: calc(100% - 14px); opacity: 1; }
+    80%, 100% { left: calc(100% - 14px); opacity: 0; }
+  }
+
+  /* Phones: top-to-bottom */
+  @media (max-width: 720px) {
+    .flow { flex-direction: column; padding: 16px; --link: 40px; }
+    .stage { flex-direction: row; }
+    .stage .node { flex: 1 1 0; }
+    .link::before { left: 50%; right: auto; top: 4px; bottom: 4px; border-top: 0; border-left: 1.5px dashed var(--muted); }
+    .link::after { right: auto; left: calc(50% - 3.25px); top: auto; bottom: 2px; border: 4px solid transparent; border-top: 6px solid var(--muted); border-bottom: 0; }
+    .via { bottom: auto; top: 50%; left: calc(50% + 10px); transform: translateY(-50%); }
+    .packet { left: calc(50% - 2.25px); top: 4px; animation-name: travel-y; }
+    @keyframes travel-y {
+      0% { top: 4px; opacity: 0; }
+      15% { opacity: 1; }
+      70% { top: calc(100% - 14px); opacity: 1; }
+      80%, 100% { top: calc(100% - 14px); opacity: 0; }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) { .packet { display: none; } }
+</style>

@@ -1,0 +1,151 @@
+---
+// Same data as the homepage, laid out as one A4 page.
+// `npm run resume:pdf` prints this to public/yogesh-kumar-resume.pdf.
+import Base from '../layouts/Base.astro';
+import {
+  person, education, experience, systems, openSource, recognition, skillsForResume,
+} from '../data/profile';
+import { getStars } from '../lib/github';
+
+const stars = await getStars('Coden-inja/alchEmaiLyst', 42);
+const fill = (t: string) => t.replaceAll('{stars}', String(stars));
+const projects = systems.filter((s) => s.resume.length > 0);
+const strip = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+const site = strip(Astro.site?.toString() ?? '');
+---
+<Base title={`Resume · ${person.name}`} bare>
+  <div class="toolbar">
+    <a href="/" class="mono">← {site}</a>
+    <a class="btn primary" href="/yogesh-kumar-resume.pdf" download>Download PDF</a>
+  </div>
+
+  <article class="sheet">
+    <header>
+      <div>
+        <h1>{person.name}</h1>
+        <p class="role">{person.role}: I design how products and systems connect.</p>
+      </div>
+      <ul class="contact">
+        <li><a href={`mailto:${person.email}`}>{person.email}</a></li>
+        {person.showPhoneOnResume && <li>{person.phone}</li>}
+        <li><a href={`https://${site}`}>{site}</a></li>
+        <li><a href={person.links.github}>{strip(person.links.github)}</a></li>
+        <li><a href={person.links.linkedin}>linkedin.com/in/yogesh-kumar</a></li>
+      </ul>
+    </header>
+
+    <section>
+      <h2>Experience</h2>
+      {experience.map((e) => (
+        <div class="item">
+          <div class="line"><strong>{e.company}</strong><span class="date">{e.dates}</span></div>
+          <div class="sub">{e.role} · {e.place}</div>
+          <ul>{e.bullets.map((b) => <li>{b}</li>)}</ul>
+        </div>
+      ))}
+    </section>
+
+    <section>
+      <h2>Selected systems</h2>
+      {projects.map((p) => (
+        <div class="item">
+          <div class="line">
+            <span><strong>{p.name ?? p.title}</strong> <span class="stack">{p.stack.slice(0, 6).join(' · ')}</span></span>
+            <span class="date">{p.date}</span>
+          </div>
+          <ul>{p.resume.map((b) => <li>{b}</li>)}</ul>
+        </div>
+      ))}
+    </section>
+
+    <section>
+      <h2>Open source &amp; leadership</h2>
+      <div class="item">
+        <div class="line"><span><strong>{openSource.title}</strong> <span class="stack">{openSource.role}</span></span><span class="date">{openSource.dates}</span></div>
+        <ul>{openSource.bullets.map((b) => <li>{fill(b)}</li>)}</ul>
+      </div>
+    </section>
+
+    <div class="cols">
+      <section>
+        <h2>Recognition</h2>
+        <ul class="plain">
+          {recognition.slice(0, 5).map((r) => (
+            <li><span><strong>{r.result}</strong>, {r.event}</span><span class="date">{r.date}</span></li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h2>Skills</h2>
+        <dl class="skills">
+          {skillsForResume.map((s) => <div><dt>{s.k}</dt><dd>{s.v}</dd></div>)}
+        </dl>
+      </section>
+    </div>
+
+    <section>
+      <h2>Education</h2>
+      <div class="line">
+        <span><strong>{education.school}</strong>, {education.degree}{education.cgpa && ` · CGPA ${education.cgpa}`}</span>
+        <span class="date">{education.dates}</span>
+      </div>
+    </section>
+  </article>
+</Base>
+
+<style>
+  @page { size: A4; margin: 0; }
+  :global(body) { background: var(--line); }
+  .toolbar { max-width: 210mm; margin: 24px auto 16px; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+  .toolbar a.mono { text-decoration: none; color: var(--ink-2); }
+
+  .sheet {
+    /* fixed light palette: the PDF should never print in dark mode */
+    --ink: #1c1915; --ink-2: #3f3a33; --muted: #776f63; --line: #e6dfd1; --accent: #e3a008; --accent-ink: #8a5a00;
+    width: 210mm; min-height: 297mm; margin: 0 auto 48px; padding: 14mm 15mm;
+    background: #fff; color: var(--ink);
+    font-size: 9.1pt; line-height: 1.42;
+    box-shadow: 0 10px 40px -20px rgba(0,0,0,.35);
+  }
+  @media screen and (max-width: 220mm) {
+    .sheet { width: auto; min-height: 0; margin: 0 8px 32px; padding: 20px 16px; font-size: 11px; }
+    header { flex-direction: column; }
+    .contact { text-align: left !important; }
+    .cols { grid-template-columns: 1fr !important; }
+  }
+  @media print {
+    :global(body) { background: #fff; }
+    .toolbar { display: none; }
+    .sheet { margin: 0; box-shadow: none; }
+  }
+
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 10px; border-bottom: 1.5px solid var(--ink); }
+  h1 { font-family: var(--serif); font-size: 30pt; line-height: 1; }
+  .role { margin: 6px 0 0; color: var(--ink-2); font-size: 9.6pt; }
+  .contact { list-style: none; margin: 0; padding: 0; text-align: right; font-family: var(--mono); font-size: 7.6pt; line-height: 1.55; color: var(--ink-2); }
+  .contact a { text-decoration: none; color: inherit; }
+
+  section { margin-top: 11px; padding: 0; }
+  h2 {
+    font-family: var(--mono); font-size: 7.4pt; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent-ink); margin: 0 0 5px; display: flex; align-items: center; gap: 8px;
+  }
+  h2::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .item + .item { margin-top: 7px; }
+  .line { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .sub { color: var(--muted); font-size: 8.6pt; }
+  .stack { color: var(--muted); font-size: 8.2pt; font-weight: 400; margin-left: 4px; }
+  .date { font-family: var(--mono); font-size: 7.6pt; color: var(--muted); white-space: nowrap; }
+  ul { margin: 3px 0 0; padding-left: 13px; }
+  li { margin: 1.5px 0; color: var(--ink-2); }
+  li::marker { color: var(--accent); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  .plain { list-style: none; padding: 0; }
+  .plain li { display: flex; justify-content: space-between; gap: 8px; }
+  .plain li .date { margin-left: auto; }
+  .skills { margin: 3px 0 0; }
+  .skills div { display: grid; grid-template-columns: 8.4em 1fr; gap: 6px; margin: 1.5px 0; }
+  .skills dt { font-weight: 600; }
+  .skills dd { margin: 0; color: var(--ink-2); }
+  a { text-decoration: none; }
+</style>
