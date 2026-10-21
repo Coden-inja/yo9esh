@@ -9,7 +9,11 @@ import { getStars } from '../lib/github';
 
 const stars = await getStars('Coden-inja/alchEmaiLyst', 42);
 const fill = (t: string) => t.replaceAll('{stars}', String(stars));
-const projects = systems.filter((s) => s.resume.length > 0);
+// newest first on paper, regardless of the order they're featured on the site
+const resumeOrder = ['tts', 'laaf', 'agentsfx', 'n8n'];
+const projects = systems
+  .filter((s) => s.resume.length > 0)
+  .sort((a, b) => resumeOrder.indexOf(a.id) - resumeOrder.indexOf(b.id));
 const strip = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 const site = strip(Astro.site?.toString() ?? '');
 ---
@@ -70,7 +74,7 @@ const site = strip(Astro.site?.toString() ?? '');
       <section>
         <h2>Recognition</h2>
         <ul class="plain">
-          {recognition.slice(0, 5).map((r) => (
+          {recognition.filter((r) => r.resume !== false).map((r) => (
             <li><span><strong>{r.result}</strong>, {r.event}</span><span class="date">{r.date}</span></li>
           ))}
         </ul>

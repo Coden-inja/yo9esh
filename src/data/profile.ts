@@ -13,6 +13,8 @@ export type System = {
   constraint: string;
   decision: string;
   tradeoff?: string; // only when Yogesh has stated one himself
+  featured?: boolean; // shown before "View more"
+  image?: { key: string; alt: string }; // key into src/assets/projects
   stack: string[];
   links: { label: string; href: string }[];
   resume: string[]; // bullet points used on the PDF
@@ -63,6 +65,7 @@ export const experience = [
 export const systems: System[] = [
   {
     id: 'tts',
+    featured: true,
     name: 'Chatterbox TTS Pipeline',
     date: 'Jul 2026',
     title: 'From 48 GB accelerators to an 8 GB GPU',
@@ -94,6 +97,7 @@ export const systems: System[] = [
   },
   {
     id: 'hls',
+    featured: true,
     title: 'A 360° player that starts fast',
     kicker: 'SystemStar Infotech · 2025–26',
     summary:
@@ -120,6 +124,7 @@ export const systems: System[] = [
   },
   {
     id: 'laaf',
+    featured: true,
     name: 'CoralTeams · LAAF dev infra',
     date: 'May 2026',
     title: 'LAAF: infra from a potato laptop',
@@ -189,6 +194,35 @@ export const systems: System[] = [
     ],
   },
   {
+    id: 'agentsfx',
+    name: 'AgentSFX · Godot add-on',
+    date: 'Dec 2025',
+    title: 'One-click game audio for Godot',
+    kicker: 'Track winner · Calcutta Hacks · Dec 2025',
+    summary:
+      'Searching for and creating sound effects is a tedious part of making a game. We built a Godot add-on that creates SFX, character voices, NPC dialogue and BGM with AI and integrates them in one click. Team 4bajesonewale, with Soumyadeep Bhowmik, Harsh Sinha and Amlan Roy.',
+    metrics: [
+      { value: 'Track winner', label: 'Calcutta Hacks' },
+      { value: '1 click', label: 'generate + integrate' },
+      { value: '4', label: 'person team' },
+    ],
+    diagram: [
+      { nodes: [{ label: 'Godot project', detail: 'code + screenshot' }] },
+      { via: 'analyse', nodes: [{ label: 'LLM', detail: 'list of sounds needed' }] },
+      { via: 'prompts', nodes: [{ label: 'ElevenLabs', detail: 'SFX · voices · BGM' }] },
+      { via: 'one click', nodes: [{ label: 'Godot add-on', detail: 'integrated into code', accent: true }] },
+    ],
+    constraint: 'Searching for and creating sound effects for a game is tedious.',
+    decision:
+      'An LLM analyses the game’s code and a screenshot to make a list of required sounds, ElevenLabs generates them, and the add-on integrates everything into the code in one click.',
+    stack: ['Godot', 'ElevenLabs', 'LLM'],
+    links: [{ label: 'Demo', href: 'https://lnkd.in/g-gS6XbD' }],
+    image: { key: 'agentsfx', alt: 'The AgentSFX dock in Godot listing generated sounds, next to the running platformer game' },
+    resume: [
+      'Track winner at Calcutta Hacks: a Godot add-on where an LLM reads the game’s code and screenshot, ElevenLabs generates the needed SFX, voices and BGM, and everything is integrated in one click.',
+    ],
+  },
+  {
     id: 'alchemailyst',
     title: 'AlchEmaiLyst, and the community around it',
     kicker: 'Open source · GSSoC ’25 Project Admin',
@@ -213,6 +247,31 @@ export const systems: System[] = [
       { label: 'Live', href: 'https://alchemailyst.vercel.app' },
       { label: 'Code', href: 'https://github.com/Coden-inja/alchEmaiLyst' },
     ],
+    resume: [],
+  },
+  {
+    id: 'schedulo',
+    name: 'Schedulo · local-AI Slack bot',
+    date: 'Jan 2026',
+    title: 'A Slack scheduler that keeps data in-house',
+    kicker: 'Schedulo · Slack bot · Jan 2026',
+    summary:
+      'Most companies won’t let internal data touch ChatGPT or Gemini. So I built a Slack bot that schedules meetings inside Slack, runs fully on local AI, and never sends data outside the company.',
+    metrics: [
+      { value: 'Local', label: 'LLM via Ollama' },
+      { value: '0', label: 'cloud LLM calls' },
+      { value: 'Few files', label: '+ config to set up' },
+    ],
+    diagram: [
+      { nodes: [{ label: 'Slack', detail: 'chat' }] },
+      { via: 'message', nodes: [{ label: 'Python + Ollama', detail: 'local AI analysis', accent: true }] },
+      { via: 'event', nodes: [{ label: 'Apps Script', detail: 'Google Calendar API' }] },
+    ],
+    constraint: 'Internal company data can’t be sent to cloud LLMs like ChatGPT or Gemini.',
+    decision:
+      'Run the AI fully locally with Ollama: Slack handles chat, Python does the AI analysis, and Google Apps Script connects to the Calendar API.',
+    stack: ['Python', 'Ollama', 'Slack', 'Google Apps Script'],
+    links: [{ label: 'Code', href: 'https://github.com/Coden-inja/Slack-scheduler' }],
     resume: [],
   },
 ];
@@ -241,9 +300,10 @@ export const builds = [
 
 export const recognition = [
   { date: 'Jul 2026', event: 'TCS hackathon', result: 'Winner', note: 'Lost & Found, end to end in 2 hours' },
-  { date: '2025', event: 'e-Summit ’25, EDC HITK', result: '1st runner-up ×2', note: 'Ideathon (Optiq) + Marketing Gimmick' },
+  { date: 'Dec 2025', event: 'Calcutta Hacks', result: 'Track winner', note: 'AgentSFX, AI game audio for Godot' },
+  { date: 'Nov 2025', event: 'e-Summit ’25, EDC HITK', result: '1st runner-up ×2', note: 'Ideathon (Optiq) + Marketing Gimmick' },
   { date: 'Jul 2025', event: 'Ideatex, GDG on Campus HIT', result: '1st prize', note: 'Cursor for n8n · 400+ developers' },
-  { date: 'Feb 2025', event: 'ACM Brainstorm quiz', result: '2nd runner-up', note: '' },
+  { date: 'Feb 2025', event: 'ACM Brainstorm quiz', result: '2nd runner-up', note: '', resume: false },
   { date: 'Dec 2024', event: 'Smart India Hackathon', result: 'Grand Finalist', note: 'Top 0.2% of 50k+ teams · team KrishiSahayak' },
   { date: 'Sep 2024', event: 'HackHeritage', result: '3rd of 200', note: 'SIH college prelims' },
 ];

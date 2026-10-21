@@ -15,6 +15,8 @@ import portrait from '../assets/photos/portrait.png';
 
 const photos = { sih, ideatex, esummit, tcs } as const;
 const stars = await getStars('Coden-inja/alchEmaiLyst', 42);
+const featured = systems.filter((s) => s.featured);
+const more = systems.filter((s) => !s.featured);
 const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.data.order);
 ---
 <Base>
@@ -25,7 +27,18 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
       <h2>Selected systems</h2>
       <span class="count">{String(systems.length).padStart(2, '0')} case studies</span>
     </div>
-    {systems.map((s, i) => <SystemCard system={s} index={i} stars={stars} />)}
+    {featured.map((s, i) => <SystemCard system={s} index={i} stars={stars} />)}
+
+    {more.length > 0 && (
+      <details class="more">
+        <summary>
+          <span class="open-label">View {more.length} more systems</span>
+          <span class="close-label">Show fewer</span>
+          <span class="names muted">{more.map((s) => (s.name ?? s.title).split(/ · |,/)[0]).join(' · ')}</span>
+        </summary>
+        {more.map((s, i) => <SystemCard system={s} index={featured.length + i} stars={stars} />)}
+      </details>
+    )}
 
     <div class="builds">
       <p class="eyebrow">Also built</p>
@@ -130,6 +143,19 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
 </Base>
 
 <style>
+  .more { margin-top: 32px; }
+  .more summary {
+    list-style: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+    padding: 20px; border: 1px dashed var(--line); border-radius: var(--radius);
+    font-weight: 500; transition: border-color .15s, background .15s;
+  }
+  .more summary::-webkit-details-marker { display: none; }
+  .more summary:hover { border-color: var(--accent); background: var(--surface); }
+  .more summary .names { font-family: var(--mono); font-size: 0.72rem; font-weight: 400; }
+  .more .close-label, .more[open] .open-label, .more[open] .names { display: none; }
+  .more[open] .close-label { display: inline; }
+  .more[open] summary { margin-bottom: 8px; }
   .builds { margin-top: 56px; }
   .builds ul { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 40px; }
   .builds li { display: flex; flex-direction: column; gap: 2px; padding: 14px 0; border-top: 1px solid var(--line); font-size: 0.92rem; color: var(--ink-2); }

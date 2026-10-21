@@ -1,10 +1,15 @@
 ---
+import { Image } from 'astro:assets';
 import Flow from './Flow.astro';
 import type { System } from '../data/profile';
+import agentsfx from '../assets/projects/agentsfx.png';
+
+const images: Record<string, ImageMetadata> = { agentsfx };
 
 interface Props { system: System; index: number; stars: number }
 const { system: s, index, stars } = Astro.props;
 const fill = (t: string) => t.replaceAll('{stars}', String(stars));
+const shot = s.image && images[s.image.key];
 ---
 <article class="sys" id={s.id}>
   <header>
@@ -23,6 +28,10 @@ const fill = (t: string) => t.replaceAll('{stars}', String(stars));
   </ul>
 
   <Flow stages={s.diagram} />
+
+  {shot && (
+    <Image src={shot} alt={s.image!.alt} widths={[480, 884]} sizes="(max-width: 720px) 100vw, 884px" class="shot" loading="lazy" />
+  )}
 
   <dl class:list={['why', { two: !s.tradeoff }]}>
     <div><dt>Constraint</dt><dd>{s.constraint}</dd></div>
@@ -56,6 +65,7 @@ const fill = (t: string) => t.replaceAll('{stars}', String(stars));
   @media (max-width: 560px) { .metrics { grid-template-columns: 1fr; } .metrics li { flex-direction: row; align-items: baseline; gap: 12px; } }
 
   .why { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px, 3vw, 32px); margin: 28px 0 24px; }
+  .shot { width: 100%; height: auto; margin-top: 16px; border-radius: var(--radius); border: 1px solid var(--line); }
   .why.two { grid-template-columns: repeat(2, 1fr); }
   .why dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 6px; }
   .why dd { margin: 0; font-size: 0.95rem; color: var(--ink-2); }
