@@ -7,7 +7,7 @@ const notes = defineCollection({
     title: z.string(),
     description: z.string(),
     order: z.number(),
-    system: z.string().optional(), // id from profile.systems; renders its diagram
+    system: z.string().optional(), // key in profile.noteDiagrams; renders that diagram
     tag: z.string(),
   }),
 });

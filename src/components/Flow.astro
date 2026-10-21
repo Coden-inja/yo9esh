@@ -1,94 +1,167 @@
 ---
-import type { Stage } from '../data/profile';
+// Architecture diagram as a real graph: explicit nodes + edges, so branches
+// (laptop → tunnel A → Codespaces, laptop → tunnel B → Colab) stay correct.
+// Two SVG layouts are rendered at build time: left→right on desktop and
+// top→bottom on phones (col/row transposed). No client JS.
+import type { Graph } from '../data/profile';
+import { icon } from '../lib/icons';
 
-interface Props { stages: Stage[]; compact?: boolean }
-const { stages, compact = false } = Astro.props;
+interface Props { graph: Graph; id: string }
+const { graph, id } = Astro.props;
 
-const label = stages
-  .map((s) => s.nodes.map((n) => n.label + (n.detail ? ` (${n.detail})` : '')).join(' + '))
-  .join(' → ');
+type Box = { x: number; y: number; w: number; h: number };
+const D = { w: 150, h: 66, gx: 80, gy: 20, pad: 14 };
+const M = { width: 330, h: 64, gx: 12, gy: 44, pad: 6 };
+
+const maxCol = Math.max(...graph.nodes.map((n) => n.col));
+const maxRow = Math.max(...graph.nodes.map((n) => n.row));
+
+function layout(mobile: boolean) {
+  const pos = new Map<string, Box>();
+  if (!mobile) {
+    for (const n of graph.nodes) {
+      pos.set(n.id, { x: D.pad + n.col * (D.w + D.gx), y: D.pad + n.row * (D.h + D.gy), w: D.w, h: D.h });
+    }
+    return { pos, W: D.pad * 2 + (maxCol + 1) * D.w + maxCol * D.gx, H: D.pad * 2 + (maxRow + 1) * D.h + maxRow * D.gy };
+  }
+  const lanes = Math.ceil(maxRow) + 1;
+  const w = (M.width - M.pad * 2 - (lanes - 1) * M.gx) / lanes;
+  for (const n of graph.nodes) {
+    pos.set(n.id, { x: M.pad + n.row * (w + M.gx), y: M.pad + n.col * (M.h + M.gy), w, h: M.h });
+  }
+  return { pos, W: M.width, H: M.pad * 2 + (maxCol + 1) * M.h + maxCol * M.gy };
+}
+
+// `both` = request/response edge: arrowheads at both ends, so leave a gap at the start too
+function route(a: Box, b: Box, both = false) {
+  const ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
+  const bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+  const dx = bc.x - ac.x, dy = bc.y - ac.y;
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    const sx = dx > 0 ? a.x + a.w + (both ? 2 : 0) : a.x - (both ? 2 : 0), ex = dx > 0 ? b.x - 2 : b.x + b.w + 2;
+    const mx = (sx + ex) / 2;
+    return { d: `M${sx},${ac.y} C${mx},${ac.y} ${mx},${bc.y} ${ex},${bc.y}`, lx: mx, ly: (ac.y + bc.y) / 2 - 7, anchor: 'middle', gap: Math.abs(ex - sx) };
+  }
+  const sy = dy > 0 ? a.y + a.h + (both ? 2 : 0) : a.y - (both ? 2 : 0), ey = dy > 0 ? b.y - 2 : b.y + b.h + 2;
+  const my = (sy + ey) / 2;
+  return { d: `M${ac.x},${sy} C${ac.x},${my} ${bc.x},${my} ${bc.x},${ey}`, lx: (ac.x + bc.x) / 2 + 9, ly: my + 3, anchor: 'start', gap: Infinity };
+}
+
+const views = [false, true].map((mobile) => {
+  const { pos, W, H } = layout(mobile);
+  const edges = graph.edges.map((e, i) => ({ ...e, ...route(pos.get(e.from)!, pos.get(e.to)!, e.both), delay: (i * 0.45).toFixed(2) }));
+  return { mobile, pos, W, H, edges };
+});
+
+const label = graph.edges
+  .map((e) => {
+    const a = graph.nodes.find((n) => n.id === e.from)!, b = graph.nodes.find((n) => n.id === e.to)!;
+    return `${a.label} → ${b.label}${e.label ? ` (${e.label})` : ''}`;
+  })
+  .join('; ');
 ---
-<div class:list={['flow', { compact }]} role="img" aria-label={`System diagram: ${label}`}>
-  {stages.map((s, i) => (
-    <Fragment>
-      {i > 0 && (
-        <div class="link" aria-hidden="true">
-          {s.via && <span class="via">{s.via}</span>}
-          <i class="packet" style={`animation-delay:${(i * 0.45).toFixed(2)}s`} />
-        </div>
-      )}
-      <div class="stage">
-        {s.nodes.map((n) => (
-          <div class:list={['node', { accent: n.accent }]}>
-            <b>{n.label}</b>
-            {n.detail && <span>{n.detail}</span>}
-          </div>
-        ))}
-      </div>
-    </Fragment>
+<figure class="flow" role="img" aria-label={`System diagram: ${label}`}>
+  {views.map((v) => (
+    <svg
+      class:list={['graph', v.mobile ? 'mob' : 'desk']}
+      viewBox={`0 0 ${v.W} ${v.H}`}
+      style={`max-width:${v.W}px`}
+      aria-hidden="true"
+    >
+      <defs>
+        <marker id={`${id}-${v.mobile ? 'm' : 'd'}-arrow`} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L8,4 L0,8 z" class="arrowhead" />
+        </marker>
+      </defs>
+
+      {v.edges.map((e) => (
+        <g>
+          <path
+            d={e.d}
+            class:list={['edge', { dashed: e.dashed }]}
+            marker-end={`url(#${id}-${v.mobile ? 'm' : 'd'}-arrow)`}
+            marker-start={e.both ? `url(#${id}-${v.mobile ? 'm' : 'd'}-arrow)` : undefined}
+          />
+          {!e.dashed && (
+            <circle r="3" class="packet">
+              <animateMotion dur="2.4s" repeatCount="indefinite" begin={`-${e.delay}s`} path={e.d} />
+              <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.8;1" dur="2.4s" repeatCount="indefinite" begin={`-${e.delay}s`} />
+            </circle>
+          )}
+          {e.label && e.label.length * 6 + 10 <= e.gap && <text x={e.lx} y={e.ly} text-anchor={e.anchor} class="via">{e.label}</text>}
+        </g>
+      ))}
+
+      {graph.nodes.map((n) => {
+        const b = v.pos.get(n.id)!;
+        return (
+          <foreignObject x={b.x} y={b.y} width={b.w} height={b.h}>
+            <div class:list={['node', { accent: n.accent }]}>
+              {n.icon && <span class="ico" set:html={icon(n.icon)} />}
+              <span class="txt">
+                <b>{n.label}</b>
+                {n.detail && <span>{n.detail}</span>}
+              </span>
+            </div>
+          </foreignObject>
+        );
+      })}
+    </svg>
   ))}
-</div>
+</figure>
 
 <style>
   .flow {
-    --link: 66px;
-    display: flex; align-items: stretch;
-    padding: 22px; border: 1px solid var(--line); border-radius: var(--radius);
+    margin: 0; padding: 18px 14px; border: 1px solid var(--line); border-radius: var(--radius);
     background:
       radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0) 0 0 / 18px 18px,
       var(--surface);
+    display: flex; justify-content: center;
   }
-  .stage { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+  .graph { display: block; width: 100%; height: auto; overflow: visible; }
+  .mob { display: none; }
+  @media (max-width: 720px) {
+    .flow { padding: 12px 8px; }
+    .desk { display: none; }
+    .mob { display: block; }
+  }
+
+  .edge { fill: none; stroke: var(--muted); stroke-width: 1.4; opacity: .7; }
+  .edge.dashed { stroke-dasharray: 4 4; }
+  .arrowhead { fill: var(--muted); opacity: .8; }
+  .via {
+    font: 10px var(--mono); fill: var(--muted);
+    paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round;
+  }
+  .packet { fill: var(--accent); }
+
   .node {
-    display: flex; flex-direction: column; gap: 2px;
-    padding: 10px 12px; border-radius: 10px;
-    background: var(--surface); border: 1px solid var(--line);
+    box-sizing: border-box; width: 100%; height: 100%;
+    display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
     box-shadow: 0 1px 0 var(--line);
   }
-  .node b { font: 600 0.8rem/1.25 var(--mono); color: var(--ink); }
-  .node span { font-size: 0.72rem; line-height: 1.35; color: var(--muted); }
   .node.accent { border-color: var(--accent); background: var(--accent-soft); }
-  .node.accent b { color: var(--accent-ink); }
-
-  .link { flex: 0 0 var(--link); position: relative; display: flex; align-items: center; justify-content: center; }
-  .link::before { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; border-top: 1.5px dashed var(--muted); opacity: .55; }
-  .link::after {
-    content: ''; position: absolute; right: 2px; top: calc(50% - 4px);
-    border: 4px solid transparent; border-left: 6px solid var(--muted); border-right: 0; opacity: .7;
+  .ico {
+    flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px;
+    background: var(--bg); color: var(--ink-2);
   }
-  .via {
-    position: absolute; bottom: calc(50% + 6px); left: 50%; transform: translateX(-50%);
-    font: 0.62rem/1 var(--mono); color: var(--muted); white-space: nowrap;
-    background: var(--surface); padding: 2px 4px; border-radius: 4px;
+  .ico :global(svg) { width: 17px; height: 17px; }
+  .node.accent .ico { background: var(--surface); color: var(--accent-ink); }
+  .txt { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .txt b {
+    font: 600 12.5px/1.2 var(--sans); letter-spacing: -0.01em; color: var(--ink);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .packet {
-    position: absolute; top: calc(50% - 3px); left: 4px;
-    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
-    animation: travel 2.4s cubic-bezier(.5,0,.5,1) infinite;
+  .node.accent .txt b { color: var(--accent-ink); }
+  .txt span {
+    font-size: 10.5px; line-height: 1.3; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  @keyframes travel {
-    0% { left: 4px; opacity: 0; }
-    15% { opacity: 1; }
-    70% { left: calc(100% - 14px); opacity: 1; }
-    80%, 100% { left: calc(100% - 14px); opacity: 0; }
-  }
-
-  /* Phones: top-to-bottom */
   @media (max-width: 720px) {
-    .flow { flex-direction: column; padding: 16px; --link: 40px; }
-    .stage { flex-direction: row; }
-    .stage .node { flex: 1 1 0; }
-    .link::before { left: 50%; right: auto; top: 4px; bottom: 4px; border-top: 0; border-left: 1.5px dashed var(--muted); }
-    .link::after { right: auto; left: calc(50% - 3.25px); top: auto; bottom: 2px; border: 4px solid transparent; border-top: 6px solid var(--muted); border-bottom: 0; }
-    .via { bottom: auto; top: 50%; left: calc(50% + 10px); transform: translateY(-50%); }
-    .packet { left: calc(50% - 2.25px); top: 4px; animation-name: travel-y; }
-    @keyframes travel-y {
-      0% { top: 4px; opacity: 0; }
-      15% { opacity: 1; }
-      70% { top: calc(100% - 14px); opacity: 1; }
-      80%, 100% { top: calc(100% - 14px); opacity: 0; }
-    }
+    .node { gap: 7px; padding: 6px 8px; }
+    .ico { width: 24px; height: 24px; border-radius: 6px; }
+    .ico :global(svg) { width: 14px; height: 14px; }
   }
   @media (prefers-reduced-motion: reduce) { .packet { display: none; } }
 </style>

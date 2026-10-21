@@ -1,15 +1,18 @@
 // Single source of truth for the site *and* the PDF resume.
 // Edit here; both outputs update.
 
-export type Node = { label: string; detail?: string; accent?: boolean };
-export type Stage = { nodes: Node[]; via?: string }; // `via` labels the arrow INTO this stage
+// Diagrams are graphs on a grid: col = step left→right, row = lane (0.5 = centred
+// between two lanes). Phones transpose it to top→bottom. Icons: see src/lib/icons.ts.
+export type GNode = { id: string; label: string; detail?: string; icon?: string; col: number; row: number; accent?: boolean };
+export type Edge = { from: string; to: string; label?: string; dashed?: boolean; both?: boolean }; // both = request/response
+export type Graph = { nodes: GNode[]; edges: Edge[] };
 export type System = {
   id: string;
   title: string;
   kicker: string; // where/when, one line
   summary: string;
   metrics: { value: string; label: string }[];
-  diagram: Stage[];
+  diagram: Graph;
   constraint: string;
   decision: string;
   tradeoff?: string; // only when Yogesh has stated one himself
@@ -63,6 +66,8 @@ export const experience = [
 ];
 
 export const systems: System[] = [
+  // Source: resume (VRAM/cost/listings numbers) + Coden-inja/regex-script (MySQL properties →
+  // Node sanitizer → tts_clean_overview). T3 → S3Gen is Chatterbox's own two-stage design.
   {
     id: 'tts',
     featured: true,
@@ -71,23 +76,35 @@ export const systems: System[] = [
     title: 'From 48 GB accelerators to an 8 GB GPU',
     kicker: 'Chatterbox TTS pipeline · 2026',
     summary:
-      'Automated voiceover generation for 2,655+ listings with Chatterbox TTS. The model’s memory grew with input length, so it needed 48 GB accelerators and still crashed on long inputs.',
+      'Automated voiceovers for 2,655+ real-estate listings. Listing text is cleaned into speakable text, then voiced by Chatterbox, whose memory grew with input length until it needed 48 GB accelerators.',
     metrics: [
       { value: '16–80 → 5 GB', label: 'VRAM, any input length' },
       { value: '−87%', label: 'infra cost' },
       { value: '2,655+', label: 'listings, zero OOM' },
     ],
-    diagram: [
-      { nodes: [{ label: 'MySQL', detail: 'listings' }] },
-      { via: 'text', nodes: [{ label: 'Chatterbox S3Gen', detail: 'bounded-memory chunks · ~5 GB', accent: true }] },
-      { via: 'runs on', nodes: [{ label: 'RTX 3070 · RunPod', detail: 'consumer GPUs' }] },
-      { via: 'audio', nodes: [{ label: 'BunnyCDN' }] },
-    ],
+    diagram: {
+      nodes: [
+        { id: 'db', label: 'MySQL', detail: 'listing text', icon: 'si:mysql', col: 0, row: 0 },
+        { id: 'clean', label: 'Text sanitizer', detail: 'Node.js · spoken form', icon: 'si:nodedotjs', col: 1, row: 0 },
+        { id: 't3', label: 'Chatterbox T3', detail: 'text → speech tokens', icon: 'my:model', col: 2, row: 0 },
+        { id: 's3', label: 'S3Gen', detail: 'chunked · ~5 GB VRAM', icon: 'my:waveform', col: 3, row: 0, accent: true },
+        { id: 'gpu', label: 'RTX 3070 · RunPod', detail: 'consumer GPUs', icon: 'si:nvidia', col: 2.5, row: 1 },
+        { id: 'cdn', label: 'BunnyCDN', detail: 'voiceover audio', icon: 'si:bunnydotnet', col: 4, row: 0 },
+      ],
+      edges: [
+        { from: 'db', to: 'clean', label: 'overview' },
+        { from: 'clean', to: 't3', label: '≤150 words' },
+        { from: 't3', to: 's3', label: 'tokens' },
+        { from: 's3', to: 'cdn', label: 'audio' },
+        { from: 't3', to: 'gpu', dashed: true },
+        { from: 's3', to: 'gpu', dashed: true },
+      ],
+    },
     constraint:
       'VRAM use was 16 GB at baseline and grew to 48–80 GB on long inputs, causing OOM crashes. Position overflows at token boundaries caused voice hallucinations.',
     decision:
-      'Transformed S3Gen into bounded-memory chunked execution and patched the position overflows and token boundaries. VRAM stays at ~5 GB at any length, so it runs on an 8 GB GPU.',
-    stack: ['Python', 'PyTorch', 'CUDA', 'RunPod', 'MySQL', 'BunnyCDN'],
+      'Transformed S3Gen into bounded-memory chunked execution and patched the position overflows and token boundaries, so VRAM stays at ~5 GB at any length. Upstream, a Node.js sanitizer turns each listing into speakable text (house numbers, dimensions, currency, acronyms) capped at ~150 words.',
+    stack: ['Python', 'PyTorch', 'CUDA', 'RunPod', 'Node.js', 'MySQL', 'BunnyCDN'],
     links: [],
     resume: [
       'Rewrote S3Gen inference as bounded-memory chunked execution: VRAM went from 16 GB (48–80 GB on long inputs) to a stable ~5 GB at any length.',
@@ -95,33 +112,44 @@ export const systems: System[] = [
       'Moved deployment from 48 GB accelerators to consumer GPUs (RTX 3070, RunPod), cutting infra cost by 87%.',
     ],
   },
+  // Source: resume + Coden-inja/video-chunks abr_processor.py (probe, encoder pick, ladder,
+  // hls_time=2, GOP = fps×2 with sc_threshold=0, master.m3u8).
   {
     id: 'hls',
     featured: true,
     title: 'A 360° player that starts fast',
     kicker: 'SystemStar Infotech · 2025–26',
-    summary:
-      'A 360° video web player and the video pipeline that feeds it, built at SystemStar.',
+    summary: 'A 360° video web player and the video pipeline that feeds it, built at SystemStar.',
     metrics: [
       { value: '4K', label: '360° source footage' },
       { value: '2 s', label: 'HLS segments (vs 4 s)' },
-      { value: 'HLS', label: 'adaptive streaming' },
+      { value: 'ABR', label: '720p → 4K ladder' },
     ],
-    diagram: [
-      { nodes: [{ label: 'Raw 4K', detail: '360° footage' }] },
-      { via: 'transcode', nodes: [{ label: 'FFmpeg', detail: 'transcode to adaptive HLS' }] },
-      { via: 'segment', nodes: [{ label: 'HLS', detail: '2 s chunks', accent: true }] },
-      { via: 'cache', nodes: [{ label: 'CDN', detail: 'edge' }] },
-      { via: 'stream', nodes: [{ label: 'Three.js player', detail: 'React · sphere' }] },
-    ],
+    diagram: {
+      nodes: [
+        { id: 'raw', label: 'Raw 4K 360°', detail: 'equirectangular', icon: 'my:sphere', col: 0, row: 0 },
+        { id: 'ff', label: 'FFmpeg', detail: 'probe · pick encoder', icon: 'si:ffmpeg', col: 1, row: 0 },
+        { id: 'abr', label: 'ABR ladder', detail: '720p → 4K · 2 s segments', icon: 'my:segments', col: 2, row: 0, accent: true },
+        { id: 'cdn', label: 'CDN', detail: 'master.m3u8 + .ts', icon: 'my:edge', col: 3, row: 0 },
+        { id: 'player', label: '360° player', detail: 'React · Three.js', icon: 'si:threedotjs', col: 4, row: 0 },
+      ],
+      edges: [
+        { from: 'raw', to: 'ff' },
+        { from: 'ff', to: 'abr', label: 'transcode' },
+        { from: 'abr', to: 'cdn', label: 'HLS' },
+        { from: 'cdn', to: 'player', label: 'stream' },
+      ],
+    },
     constraint:
       'Generic CDN defaults use 4-second segments, which slows time-to-first-byte and playback start for heavy 4K footage.',
     decision:
-      'A custom preprocessing pipeline that segments streams into 2-second chunks, transcoded by FFmpeg into adaptive HLS and played in a React + Three.js player with camera controls.',
-    stack: ['React', 'Three.js', 'FFmpeg', 'HLS', 'CDN'],
-    links: [], // TODO: add 3dnative.vercel.app if SystemStar is OK with it
+      'FFmpeg probes each source, picks the fastest available encoder (GPU when present) and transcodes an adaptive ladder from 720p up to 4K into HLS with 2-second segments. A keyframe is forced every 2 seconds so every rendition switches on the same boundaries, and a master playlist feeds the React + Three.js player.',
+    stack: ['React', 'Three.js', 'FFmpeg', 'HLS', 'Python', 'CDN'],
+    links: [],
     resume: [],
   },
+  // Source: LinkedIn LAAF post + Coden-inja/Coral-Workspace code (Vercel → ngrok A → FastAPI on
+  // Codespaces → ngrok B → Ollama on Colab; semantic engine with Coral CLI on Render).
   {
     id: 'laaf',
     featured: true,
@@ -130,38 +158,44 @@ export const systems: System[] = [
     title: 'LAAF: infra from a potato laptop',
     kicker: 'CoralTeams · Coral hackathon · 2026',
     summary:
-      'A self-hosted workspace search across GitHub, Jira, Slack and Docs. It needed a 1 GB+ Rust engine plus a 3 GB local LLM, and my laptop couldn’t run either.',
+      'CoralTeams is a self-hostable Teams interface I built for Coral, which connects tools like GitHub, Jira and Slack. It ships with a Docker image. The stack needed a 1 GB+ Rust engine and a 3 GB local LLM, and my laptop couldn’t run either.',
     metrics: [
       { value: '$0', label: 'per month' },
-      { value: '3', label: 'free clouds, 2 tunnels' },
+      { value: '4', label: 'free platforms, 2 tunnels' },
       { value: '4 GB+', label: 'stack, off-laptop' },
     ],
-    diagram: [
-      { nodes: [{ label: 'Laptop', detail: 'just the frontend', accent: true }] },
-      { via: 'https', nodes: [{ label: 'ngrok', detail: 'tunnel A' }, { label: 'ngrok', detail: 'tunnel B' }] },
-      {
-        nodes: [
-          { label: 'Codespaces', detail: 'FastAPI · Coral (Rust) · Postgres · Redis' },
-          { label: 'Colab T4', detail: 'Ollama · Qwen 2.5' },
-        ],
-      },
-    ],
+    diagram: {
+      nodes: [
+        { id: 'web', label: 'Next.js', detail: 'Vercel', icon: 'si:vercel', col: 0, row: 0.5 },
+        { id: 'api', label: 'FastAPI', detail: 'GitHub Codespaces', icon: 'si:github', col: 1, row: 0.5, accent: true },
+        { id: 'engine', label: 'Semantic engine', detail: 'Render · Coral (Rust)', icon: 'si:rust', col: 2, row: 0 },
+        { id: 'llm', label: 'Ollama · Qwen 2.5', detail: 'Google Colab T4', icon: 'si:googlecolab', col: 2, row: 1 },
+      ],
+      edges: [
+        { from: 'web', to: 'api', label: 'ngrok A' },
+        { from: 'api', to: 'engine', label: 'HTTPS' },
+        { from: 'api', to: 'llm', label: 'ngrok B' },
+        { from: 'engine', to: 'llm', label: 'ngrok B' },
+      ],
+    },
     constraint:
       'No high-spec laptop, and cloud free tiers kept rejecting card verification. The stack couldn’t even be tested locally.',
     decision:
-      'What I call CNG: SSH into GitHub Codespaces for the backend, run the LLM on Google Colab’s GPU, and expose both through ngrok. The laptop only renders the UI.',
+      'What I call CNG: the FastAPI backend runs in GitHub Codespaces (reached over SSH with the GitHub CLI), the LLM runs on Google Colab’s GPU, and ngrok tunnels expose both. The frontend sits on Vercel and the semantic engine with Coral on Render.',
     tradeoff:
       'Colab sessions expire and tunnel URLs rotate, so it’s for building and testing. Once everything works, it moves to a persistent server.',
-    stack: ['Next.js', 'FastAPI', 'Rust', 'Postgres', 'Redis', 'Ollama', 'ngrok', 'ssh'],
+    stack: ['Next.js', 'FastAPI', 'Rust', 'Ollama', 'Docker', 'ngrok', 'ssh'],
     links: [
       { label: 'Demo video', href: 'https://youtu.be/c8SvU8hh4Xg' },
       { label: 'Code', href: 'https://github.com/Coden-inja/Coral-Workspace' },
       { label: 'Read the note', href: '/notes/laaf' },
     ],
     resume: [
-      'Ran a 4 GB+ AI stack at $0/month by splitting it across GitHub Codespaces (FastAPI, Rust engine, Postgres, Redis) and a Colab GPU (Ollama), joined by ngrok tunnels.',
+      'Built CoralTeams, a self-hostable Teams interface for Coral with a Docker image, and ran its 4 GB+ AI stack at $0/month across Vercel, GitHub Codespaces, Render and a Colab GPU joined by ngrok tunnels.',
     ],
   },
+  // Source: Coden-inja/cursor-for-n8n (extension with Context7 n8n-docs retrieval; agents.ipynb
+  // RAG over n8n node DB + FAISS templates → Gemini) + Ideatex post + resume.
   {
     id: 'n8n',
     name: 'Cursor for n8n',
@@ -169,30 +203,36 @@ export const systems: System[] = [
     title: 'Cursor for n8n',
     kicker: '1st prize · Ideatex, GDG on Campus HIT · 2025',
     summary:
-      'Describe an automation in plain English, get a working n8n workflow. Built in five days with Soumyadeep Bhowmik.',
+      'Describe an automation in plain English, get an n8n workflow. A Chrome extension built in five days with Soumyadeep Bhowmik.',
     metrics: [
       { value: 'First', label: 'of 400+ developers' },
       { value: '5 days', label: 'idea to pitch' },
-      { value: 'RAG', label: 'over real node specs' },
+      { value: 'RAG', label: 'prototype over n8n nodes' },
     ],
-    diagram: [
-      { nodes: [{ label: 'Chrome ext', detail: 'prompt' }] },
-      { via: 'MCP', nodes: [{ label: 'MCP server', detail: 'TypeScript' }] },
-      { via: 'retrieve', nodes: [{ label: 'SQLite KB', detail: 'official n8n nodes', accent: true }] },
-      { via: 'context', nodes: [{ label: 'LLM', detail: 'any provider' }] },
-      { via: 'json', nodes: [{ label: 'n8n', detail: 'verified workflow' }] },
-    ],
-    constraint:
-      'LLMs hallucinate n8n nodes and parameters, so AI-generated workflows can’t be trusted.',
+    diagram: {
+      nodes: [
+        { id: 'ext', label: 'Chrome extension', detail: 'your prompt', icon: 'si:googlechrome', col: 0, row: 0.5 },
+        { id: 'c7', label: 'Context7', detail: 'relevant n8n docs', icon: 'my:docs', col: 1, row: 0, accent: true },
+        { id: 'llm', label: 'LLM', detail: 'Gemini, OpenAI, Claude…', icon: 'my:model', col: 1, row: 1 },
+        { id: 'out', label: 'n8n workflow', detail: 'JSON to import', icon: 'si:n8n', col: 2, row: 0.5 },
+      ],
+      edges: [
+        { from: 'ext', to: 'c7', label: 'docs', both: true },
+        { from: 'ext', to: 'llm', label: 'prompt', both: true },
+        { from: 'ext', to: 'out' },
+      ],
+    },
+    constraint: 'LLMs hallucinate n8n nodes and parameters, so AI-generated workflows can’t be trusted.',
     decision:
-      'An MCP server with RAG over n8n’s official SQLite knowledge base of nodes, giving any LLM verified context before it generates the workflow JSON.',
-    stack: ['TypeScript', 'Node.js', 'MCP', 'RAG', 'SQLite'],
+      'Ground the model before it writes: the extension fetches the relevant n8n docs through Context7, adds them to the prompt for the chosen LLM, and returns workflow JSON ready to import. A RAG prototype went further, searching n8n’s node database and workflow templates (FAISS) with Gemini.',
+    stack: ['JavaScript', 'Chrome extension', 'Python', 'RAG', 'FAISS', 'SQLite', 'Gemini'],
     links: [{ label: 'Code', href: 'https://github.com/Coden-inja/cursor-for-n8n' }],
     resume: [
-      'Won 1st prize at Ideatex, GDG-HITK (400+ developers) for a Chrome extension that turns natural language into verified n8n workflow JSON.',
-      'Grounded the LLM with an MCP server doing RAG over n8n’s official SQLite node knowledge base to eliminate hallucinated nodes.',
+      'Won 1st prize at Ideatex, GDG-HITK (400+ developers) for a Chrome extension that turns natural language into n8n workflow JSON.',
+      'Grounded generation in n8n docs via Context7, and prototyped RAG over n8n’s node database and workflow templates (FAISS + Gemini).',
     ],
   },
+  // Source: Calcutta Hacks post + screenshot (dock: Analyze Code → Generate Audio → Integrate).
   {
     id: 'agentsfx',
     name: 'AgentSFX · Godot add-on',
@@ -206,15 +246,22 @@ export const systems: System[] = [
       { value: '1 click', label: 'generate + integrate' },
       { value: '4', label: 'person team' },
     ],
-    diagram: [
-      { nodes: [{ label: 'Godot project', detail: 'code + screenshot' }] },
-      { via: 'analyse', nodes: [{ label: 'LLM', detail: 'list of sounds needed' }] },
-      { via: 'prompts', nodes: [{ label: 'ElevenLabs', detail: 'SFX · voices · BGM' }] },
-      { via: 'one click', nodes: [{ label: 'Godot add-on', detail: 'integrated into code', accent: true }] },
-    ],
+    diagram: {
+      nodes: [
+        { id: 'game', label: 'Godot project', detail: 'scripts + screenshot', icon: 'si:godotengine', col: 0, row: 0.5 },
+        { id: 'addon', label: 'AgentSFX dock', detail: 'inside the Godot editor', icon: 'my:plug', col: 1, row: 0.5, accent: true },
+        { id: 'llm', label: 'LLM', detail: 'list of sounds + prompts', icon: 'my:model', col: 2, row: 0 },
+        { id: 'el', label: 'ElevenLabs', detail: 'SFX · voices · BGM', icon: 'si:elevenlabs', col: 2, row: 1 },
+      ],
+      edges: [
+        { from: 'game', to: 'addon', label: 'read/write', both: true },
+        { from: 'addon', to: 'llm', label: 'analyse', both: true },
+        { from: 'addon', to: 'el', label: 'generate', both: true },
+      ],
+    },
     constraint: 'Searching for and creating sound effects for a game is tedious.',
     decision:
-      'An LLM analyses the game’s code and a screenshot to make a list of required sounds, ElevenLabs generates them, and the add-on integrates everything into the code in one click.',
+      'An add-on inside the Godot editor: an LLM analyses the game’s code and a screenshot to list the sounds it needs, ElevenLabs generates them, and the add-on integrates everything into the code in one click.',
     stack: ['Godot', 'ElevenLabs', 'LLM'],
     links: [{ label: 'Demo', href: 'https://lnkd.in/g-gS6XbD' }],
     image: { key: 'agentsfx', alt: 'The AgentSFX dock in Godot listing generated sounds, next to the running platformer game' },
@@ -222,59 +269,98 @@ export const systems: System[] = [
       'Track winner at Calcutta Hacks: a Godot add-on where an LLM reads the game’s code and screenshot, ElevenLabs generates the needed SFX, voices and BGM, and everything is integrated in one click.',
     ],
   },
+  // Source: Coden-inja/alchEmaiLyst code (React SPA → Google OAuth/Gmail API; Alchemyst AI
+  // with Gemini fallback; Summarizer / Composer / Spam cards) + GitHub stats + resume.
   {
     id: 'alchemailyst',
     title: 'AlchEmaiLyst, and the community around it',
     kicker: 'Open source · GSSoC ’25 Project Admin',
     summary:
-      'A three-agent email assistant that summarises, composes and sends. Then I opened it up through GirlScript Summer of Code and ran it as a project.',
+      'An email assistant with three agents: Summarizer, Composer and Spam. Then I opened it up through GirlScript Summer of Code and ran it as a project.',
     metrics: [
       { value: '{stars}★', label: 'GitHub stars' },
       { value: '30+', label: 'contributors onboarded' },
       { value: '#1', label: 'Alchemyst leaderboard' },
     ],
-    diagram: [
-      { nodes: [{ label: 'React UI', detail: 'Tailwind · shadcn' }] },
-      { via: 'session', nodes: [{ label: 'Express proxy', detail: 'OAuth + LLM calls', accent: true }] },
-      { via: 'OAuth 2.0', nodes: [{ label: 'Gmail API' }, { label: 'LLM agents', detail: 'summarise · compose · send' }] },
-    ],
-    constraint:
-      'An email agent needs Gmail access and LLM API keys, and both have to be handled securely.',
+    diagram: {
+      nodes: [
+        { id: 'ui', label: 'React app', detail: 'TypeScript · Tailwind', icon: 'si:react', col: 0, row: 0.5 },
+        { id: 'gmail', label: 'Gmail API', detail: 'read · send', icon: 'si:gmail', col: 1, row: 0 },
+        { id: 'al', label: 'Alchemyst AI', detail: 'Gemini as fallback', icon: 'my:model', col: 1, row: 1, accent: true },
+      ],
+      edges: [
+        { from: 'ui', to: 'gmail', label: 'OAuth 2.0', both: true },
+        { from: 'ui', to: 'al', label: 'prompts', both: true },
+      ],
+    },
+    constraint: 'Help people get through their inbox: summarise mail, draft and send replies, and clear spam from one screen.',
     decision:
-      'A secure Express backend proxy that manages Google OAuth 2.0 for Gmail and integrates the LLM APIs (Alchemyst AI, Gemini).',
-    stack: ['React', 'Express', 'OAuth 2.0', 'LLM agents'],
+      'A React app that signs in with Google OAuth 2.0, reads and sends mail through the Gmail API, and uses Alchemyst AI for summaries and drafts, falling back to Gemini.',
+    stack: ['React', 'TypeScript', 'Google OAuth 2.0', 'Gmail API', 'Alchemyst AI', 'Gemini'],
     links: [
       { label: 'Live', href: 'https://alchemailyst.vercel.app' },
       { label: 'Code', href: 'https://github.com/Coden-inja/alchEmaiLyst' },
     ],
     resume: [],
   },
+  // Source: Slack-scheduler code (Socket Mode → Python → Ollama llama3.2 JSON intent →
+  // Apps Script web app → Calendar → reply in Slack) + LinkedIn post.
   {
     id: 'schedulo',
     name: 'Schedulo · local-AI Slack bot',
     date: 'Jan 2026',
-    title: 'A Slack scheduler that keeps data in-house',
+    title: 'A Slack scheduler with local AI',
     kicker: 'Schedulo · Slack bot · Jan 2026',
     summary:
-      'Most companies won’t let internal data touch ChatGPT or Gemini. So I built a Slack bot that schedules meetings inside Slack, runs fully on local AI, and never sends data outside the company.',
+      'Most companies won’t let internal data touch ChatGPT or Gemini. So I built a Slack bot that schedules meetings right inside Slack, with the AI running fully locally on Ollama.',
     metrics: [
-      { value: 'Local', label: 'LLM via Ollama' },
+      { value: 'Local', label: 'Llama 3.2 on Ollama' },
       { value: '0', label: 'cloud LLM calls' },
-      { value: 'Few files', label: '+ config to set up' },
+      { value: '3 files', label: '+ config to set up' },
     ],
-    diagram: [
-      { nodes: [{ label: 'Slack', detail: 'chat' }] },
-      { via: 'message', nodes: [{ label: 'Python + Ollama', detail: 'local AI analysis', accent: true }] },
-      { via: 'event', nodes: [{ label: 'Apps Script', detail: 'Google Calendar API' }] },
-    ],
+    diagram: {
+      nodes: [
+        { id: 'slack', label: 'Slack', detail: '@mention', icon: 'my:chat', col: 0, row: 0 },
+        { id: 'py', label: 'Python agent', detail: 'slack_sdk', icon: 'si:python', col: 1, row: 0 },
+        { id: 'llm', label: 'Ollama', detail: 'Llama 3.2 · local', icon: 'si:ollama', col: 1, row: 1, accent: true },
+        { id: 'gas', label: 'Apps Script', detail: 'web app', icon: 'si:googleappsscript', col: 2, row: 0 },
+        { id: 'cal', label: 'Google Calendar', detail: 'new event', icon: 'si:googlecalendar', col: 3, row: 0 },
+      ],
+      edges: [
+        { from: 'slack', to: 'py', label: 'Socket Mode', both: true },
+        { from: 'py', to: 'llm', label: 'intent JSON', both: true },
+        { from: 'py', to: 'gas', label: 'POST' },
+        { from: 'gas', to: 'cal' },
+      ],
+    },
     constraint: 'Internal company data can’t be sent to cloud LLMs like ChatGPT or Gemini.',
     decision:
-      'Run the AI fully locally with Ollama: Slack handles chat, Python does the AI analysis, and Google Apps Script connects to the Calendar API.',
+      'Slack talks to a Python agent over Socket Mode. A local Llama 3.2 on Ollama reads each mention and returns the intent, a summary and the start time as JSON. A Google Apps Script web app creates the Calendar event, and the bot confirms in Slack.',
     stack: ['Python', 'Ollama', 'Slack', 'Google Apps Script'],
     links: [{ label: 'Code', href: 'https://github.com/Coden-inja/Slack-scheduler' }],
     resume: [],
   },
 ];
+
+// Diagrams for notes, keyed by the note's `system` frontmatter.
+// laaf: the dev setup exactly as described in the LinkedIn post (laptop → 2 tunnels → 2 clouds).
+export const noteDiagrams: Record<string, Graph> = {
+  laaf: {
+    nodes: [
+      { id: 'laptop', label: 'Laptop', detail: 'frontend only', icon: 'my:laptop', col: 0, row: 0.5, accent: true },
+      { id: 'ta', label: 'ngrok', detail: 'tunnel A', icon: 'si:ngrok', col: 1, row: 0 },
+      { id: 'tb', label: 'ngrok', detail: 'tunnel B', icon: 'si:ngrok', col: 1, row: 1 },
+      { id: 'cs', label: 'GitHub Codespaces', detail: 'heavy services', icon: 'si:github', col: 2, row: 0 },
+      { id: 'colab', label: 'Google Colab', detail: 'LLM, up to ~16 GB VRAM', icon: 'si:googlecolab', col: 2, row: 1 },
+    ],
+    edges: [
+      { from: 'laptop', to: 'ta' },
+      { from: 'laptop', to: 'tb' },
+      { from: 'ta', to: 'cs' },
+      { from: 'tb', to: 'colab' },
+    ],
+  },
+};
 
 export const openSource = {
   title: 'GirlScript Summer of Code ’25 · AlchEmaiLyst',
@@ -284,7 +370,7 @@ export const openSource = {
   bullets: [
     'Ran code reviews, untangled merge conflicts and onboarded 30+ contributors ({stars}★, 36 forks).',
     'Took the project from Top 10 to Rank 1 on the Alchemyst AI contributor leaderboard after opening it up via GSSoC.',
-    'Built the Express backend with Google OAuth 2.0 for Gmail; grew a 1,000+ member developer Discord.',
+    'Built the Gmail integration with Google OAuth 2.0 and the Alchemyst AI layer with a Gemini fallback; grew a 1,000+ member developer Discord.',
   ],
 };
 
@@ -320,7 +406,7 @@ export const toolbelt = [
   { tool: 'ssh', proof: 'SSH into GitHub Codespaces with the GitHub CLI to run heavy services remotely (LAAF).' },
   { tool: 'ngrok / tunnels', proof: 'Joined three free clouds into one dev stack for LAAF.' },
   { tool: 'FFmpeg + HLS', proof: 'The 4K → adaptive-stream pipeline at SystemStar.' },
-  { tool: 'TypeScript · Node', proof: 'MCP servers, Express proxies, OAuth flows.' },
+  { tool: 'TypeScript · Node', proof: 'The listing-text sanitizer behind the TTS pipeline; AlchEmaiLyst’s OAuth and Gmail flows.' },
   { tool: 'Python · PyTorch · CUDA', proof: 'Rewrote model inference to fit an 8 GB GPU.' },
   { tool: 'MySQL · SQLite', proof: 'MySQL in the TTS pipeline; the SQLite node knowledge base behind Cursor for n8n.' },
   { tool: 'React · Three.js', proof: 'The 360° player at SystemStar, ClimaVisor, 3dWebImg.' },

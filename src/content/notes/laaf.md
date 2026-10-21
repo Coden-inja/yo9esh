@@ -23,17 +23,11 @@ I couldn't deploy them. I couldn't even *test* them. My options were:
 - **N**grok: tunnels that give a private port a public URL.
 - **G**itHub Codespaces: a real Linux box with decent specs.
 
-**Backend:** SSH into a Codespace with the GitHub CLI (`gh codespace ssh`) and run the heavy services there: FastAPI, the Coral engine, Postgres, Redis. Tunnel the port out through ngrok.
+**Backend:** SSH into a Codespace with the GitHub CLI and run any heavy service there. Tunnel its port out through ngrok.
 
 **Model:** run Ollama in Colab and expose it through a second ngrok tunnel.
 
 **Laptop:** just the frontend, pointed at both URLs.
-
-```text
- Codespaces ──ngrok A──┐
-                       ├──▶ laptop (frontend only)
- Colab GPU  ──ngrok B──┘
-```
 
 Test it all, then switch to a persistent server later.
 

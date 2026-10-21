@@ -2,7 +2,7 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Flow from '../../components/Flow.astro';
-import { systems, person } from '../../data/profile';
+import { noteDiagrams, person } from '../../data/profile';
 
 export async function getStaticPaths() {
   const notes = await getCollection('notes');
@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 
 const { note } = Astro.props;
 const { Content } = await render(note);
-const system = systems.find((s) => s.id === note.data.system);
+const graph = note.data.system ? noteDiagrams[note.data.system] : undefined;
 ---
 <Base title={`${note.data.title} · ${person.name}`} description={note.data.description}>
   <article class="wrap note">
@@ -19,7 +19,7 @@ const system = systems.find((s) => s.id === note.data.system);
     <p class="eyebrow">{note.data.tag} · adapted from my LinkedIn post</p>
     <h1>{note.data.title}</h1>
     <p class="lede">{note.data.description}</p>
-    {system && <div class="diagram"><Flow stages={system.diagram} /></div>}
+    {graph && <div class="diagram"><Flow graph={graph} id={`note-${note.id}`} /></div>}
     <div class="prose"><Content /></div>
     <p class="sig">— {person.name.split(' ')[0]}</p>
   </article>

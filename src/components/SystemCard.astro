@@ -27,7 +27,7 @@ const shot = s.image && images[s.image.key];
     ))}
   </ul>
 
-  <Flow stages={s.diagram} />
+  <Flow graph={s.diagram} id={s.id} />
 
   {shot && (
     <Image src={shot} alt={s.image!.alt} widths={[480, 884]} sizes="(max-width: 720px) 100vw, 884px" class="shot" loading="lazy" />
