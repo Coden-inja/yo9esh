@@ -1,6 +1,6 @@
 ---
 title: 'LAAF: running a 4 GB AI stack from a potato laptop'
-description: 'No GPU, no credit card, no problem. Codespaces + Colab + ngrok, and the laptop only renders the UI.'
+description: 'A no-card, no-hassle way to run heavy services: Codespaces + Colab + ngrok, with the laptop as just the frontend.'
 order: 1
 system: laaf
 tag: infra
@@ -35,10 +35,6 @@ I couldn't deploy them. I couldn't even *test* them. My options were:
  Colab GPU  ──ngrok B──┘
 ```
 
+Test it all, then switch to a persistent server later.
+
 I call it **LAAF: Laptop As A Frontend**. The heavy lifting goes to cloud providers, for free.
-
-## What it's good for, and what it isn't
-
-It's a **dev and test rig**. Colab sessions time out, tunnel URLs change unless you pin a static domain, and Codespaces sleep when idle. Once the system works end to end, the same services move to one persistent server.
-
-The useful idea outlasts the hack: *where* a service runs is a deployment detail. If every piece talks over HTTP and nothing assumes `localhost`, you can move the pieces around freely.

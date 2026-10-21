@@ -12,7 +12,7 @@ export type System = {
   diagram: Stage[];
   constraint: string;
   decision: string;
-  tradeoff: string;
+  tradeoff?: string; // only when Yogesh has stated one himself
   stack: string[];
   links: { label: string; href: string }[];
   resume: string[]; // bullet points used on the PDF
@@ -25,7 +25,7 @@ export const person = {
   role: 'Full-stack engineer',
   headline: 'I design how the pieces connect.',
   intro:
-    'I build products end to end, and I care most about the parts in between: the pipelines, queues, tunnels and protocols that decide whether a product actually works. Lately I go deep on a small set of tools instead of skimming ten stacks.',
+    'I build products end to end, and I care most about the parts in between: the pipelines, tunnels and protocols that decide whether a product actually works. Lately I go deep on a small set of tools instead of skimming ten stacks.',
   location: 'Kolkata · from Gaya, Bihar',
   now: 'SDE intern at SystemStar Infotech · B.Tech CSE at Heritage Institute of Technology, ’28',
   email: 'fbyogesh111@gmail.com',
@@ -65,10 +65,10 @@ export const systems: System[] = [
     id: 'tts',
     name: 'Chatterbox TTS Pipeline',
     date: 'Jul 2026',
-    title: 'Fitting a 48 GB voice model into 5 GB',
+    title: 'From 48 GB accelerators to an 8 GB GPU',
     kicker: 'Chatterbox TTS pipeline · 2026',
     summary:
-      'Turning thousands of real-estate listings into AI voiceovers. The speech model’s memory grew with input length, so long listings crashed or hallucinated, and it needed 48 GB-class GPUs to survive.',
+      'Automated voiceover generation for 2,655+ listings with Chatterbox TTS. The model’s memory grew with input length, so it needed 48 GB accelerators and still crashed on long inputs.',
     metrics: [
       { value: '16–80 → 5 GB', label: 'VRAM, any input length' },
       { value: '−87%', label: 'infra cost' },
@@ -76,17 +76,14 @@ export const systems: System[] = [
     ],
     diagram: [
       { nodes: [{ label: 'MySQL', detail: 'listings' }] },
-      { via: 'text', nodes: [{ label: 'Cleaner', detail: 'regex normalise' }] },
-      { via: 'tokens', nodes: [{ label: 'Chatterbox T3', detail: 'text → speech tokens' }] },
-      { via: 'chunks', nodes: [{ label: 'S3Gen', detail: 'bounded-memory chunks', accent: true }] },
-      { via: 'audio', nodes: [{ label: 'BunnyCDN', detail: 'serve' }] },
+      { via: 'text', nodes: [{ label: 'Chatterbox S3Gen', detail: 'bounded-memory chunks · ~5 GB', accent: true }] },
+      { via: 'runs on', nodes: [{ label: 'RTX 3070 · RunPod', detail: 'consumer GPUs' }] },
+      { via: 'audio', nodes: [{ label: 'BunnyCDN' }] },
     ],
     constraint:
-      'S3Gen held the whole sequence in memory: 16 GB at baseline, 48–80 GB on long inputs. Position overflows at token boundaries also produced garbled “hallucinated” audio.',
+      'VRAM use was 16 GB at baseline and grew to 48–80 GB on long inputs, causing OOM crashes. Position overflows at token boundaries caused voice hallucinations.',
     decision:
-      'Rewrote S3Gen to run in bounded-memory chunks and patched the position and token-boundary handling, so memory stays flat regardless of length.',
-    tradeoff:
-      'Chunking adds stitching logic at the boundaries, but it gives memory a hard ceiling, and that ceiling is what moved inference from 48 GB accelerators to an RTX 3070.',
+      'Transformed S3Gen into bounded-memory chunked execution and patched the position overflows and token boundaries. VRAM stays at ~5 GB at any length, so it runs on an 8 GB GPU.',
     stack: ['Python', 'PyTorch', 'CUDA', 'RunPod', 'MySQL', 'BunnyCDN'],
     links: [],
     resume: [
@@ -100,25 +97,23 @@ export const systems: System[] = [
     title: 'A 360° player that starts fast',
     kicker: 'SystemStar Infotech · 2025–26',
     summary:
-      '4K 360° video is heavy, and every second before the first frame loses a viewer. I built the player and the pipeline behind it.',
+      'A 360° video web player and the video pipeline that feeds it, built at SystemStar.',
     metrics: [
       { value: '4K', label: '360° source footage' },
       { value: '2 s', label: 'HLS segments (vs 4 s)' },
-      { value: 'ABR', label: 'adaptive bitrate ladder' },
+      { value: 'HLS', label: 'adaptive streaming' },
     ],
     diagram: [
       { nodes: [{ label: 'Raw 4K', detail: '360° footage' }] },
-      { via: 'transcode', nodes: [{ label: 'FFmpeg', detail: 'bitrate ladder' }] },
+      { via: 'transcode', nodes: [{ label: 'FFmpeg', detail: 'transcode to adaptive HLS' }] },
       { via: 'segment', nodes: [{ label: 'HLS', detail: '2 s chunks', accent: true }] },
       { via: 'cache', nodes: [{ label: 'CDN', detail: 'edge' }] },
       { via: 'stream', nodes: [{ label: 'Three.js player', detail: 'React · sphere' }] },
     ],
     constraint:
-      'Generic CDN presets use ~4 s segments, so the player waits for a big first chunk of an already huge 4K stream before showing anything.',
+      'Generic CDN defaults use 4-second segments, which slows time-to-first-byte and playback start for heavy 4K footage.',
     decision:
-      'Custom preprocessing that segments streams into 2 s chunks across an adaptive bitrate ladder, played on a Three.js sphere with modular camera controls.',
-    tradeoff:
-      'Shorter segments mean more files and more playlist requests. In return, the first frame arrives sooner and quality switches react faster.',
+      'A custom preprocessing pipeline that segments streams into 2-second chunks, transcoded by FFmpeg into adaptive HLS and played in a React + Three.js player with camera controls.',
     stack: ['React', 'Three.js', 'FFmpeg', 'HLS', 'CDN'],
     links: [], // TODO: add 3dnative.vercel.app if SystemStar is OK with it
     resume: [],
@@ -151,7 +146,7 @@ export const systems: System[] = [
     decision:
       'What I call CNG: SSH into GitHub Codespaces for the backend, run the LLM on Google Colab’s GPU, and expose both through ngrok. The laptop only renders the UI.',
     tradeoff:
-      'Colab sessions expire and tunnel URLs rotate, so it’s a dev and test rig, not production. The same containers move to one persistent server later.',
+      'Colab sessions expire and tunnel URLs rotate, so it’s for building and testing. Once everything works, it moves to a persistent server.',
     stack: ['Next.js', 'FastAPI', 'Rust', 'Postgres', 'Redis', 'Ollama', 'ngrok', 'ssh'],
     links: [
       { label: 'Demo video', href: 'https://youtu.be/c8SvU8hh4Xg' },
@@ -183,11 +178,9 @@ export const systems: System[] = [
       { via: 'json', nodes: [{ label: 'n8n', detail: 'verified workflow' }] },
     ],
     constraint:
-      'LLMs invent n8n node names and parameters, so the generated JSON looks right and fails on import.',
+      'LLMs hallucinate n8n nodes and parameters, so AI-generated workflows can’t be trusted.',
     decision:
-      'An MCP server that retrieves real node definitions from n8n’s own SQLite knowledge base and grounds the model before it writes a single field.',
-    tradeoff:
-      'Grounding costs a retrieval step on every request. In exchange, workflows import and run on the first try.',
+      'An MCP server with RAG over n8n’s official SQLite knowledge base of nodes, giving any LLM verified context before it generates the workflow JSON.',
     stack: ['TypeScript', 'Node.js', 'MCP', 'RAG', 'SQLite'],
     links: [{ label: 'Code', href: 'https://github.com/Coden-inja/cursor-for-n8n' }],
     resume: [
@@ -208,15 +201,13 @@ export const systems: System[] = [
     ],
     diagram: [
       { nodes: [{ label: 'React UI', detail: 'Tailwind · shadcn' }] },
-      { via: 'session', nodes: [{ label: 'Express proxy', detail: 'keys stay server-side', accent: true }] },
+      { via: 'session', nodes: [{ label: 'Express proxy', detail: 'OAuth + LLM calls', accent: true }] },
       { via: 'OAuth 2.0', nodes: [{ label: 'Gmail API' }, { label: 'LLM agents', detail: 'summarise · compose · send' }] },
     ],
     constraint:
-      'Reading someone’s inbox means OAuth tokens and LLM API keys. Neither can ever reach the browser.',
+      'An email agent needs Gmail access and LLM API keys, and both have to be handled securely.',
     decision:
-      'A thin Express proxy owns Google OAuth 2.0 and every LLM call. The UI only ever talks to the proxy.',
-    tradeoff:
-      'One more service to run, in exchange for a single place to secure, rate-limit and swap model providers.',
+      'A secure Express backend proxy that manages Google OAuth 2.0 for Gmail and integrates the LLM APIs (Alchemyst AI, Gemini).',
     stack: ['React', 'Express', 'OAuth 2.0', 'LLM agents'],
     links: [
       { label: 'Live', href: 'https://alchemailyst.vercel.app' },
@@ -266,23 +257,22 @@ export const moments = [
 
 // "Go deep, not wide": each tool earns its place with proof.
 export const toolbelt = [
-  { tool: 'ssh', proof: 'Remote dev in Codespaces over `gh codespace ssh`; port forwarding to reach services on remote boxes.' },
+  { tool: 'ssh', proof: 'SSH into GitHub Codespaces with the GitHub CLI to run heavy services remotely (LAAF).' },
   { tool: 'ngrok / tunnels', proof: 'Joined three free clouds into one dev stack for LAAF.' },
-  { tool: 'curl & HTTP', proof: 'Debugging APIs from the terminal; the timing card at the top of this page is the same idea.' },
   { tool: 'FFmpeg + HLS', proof: 'The 4K → adaptive-stream pipeline at SystemStar.' },
   { tool: 'TypeScript · Node', proof: 'MCP servers, Express proxies, OAuth flows.' },
   { tool: 'Python · PyTorch · CUDA', proof: 'Rewrote model inference to fit an 8 GB GPU.' },
-  { tool: 'Postgres · MySQL · Redis', proof: 'Data and queues behind CoralTeams and the TTS pipeline.' },
-  { tool: 'React · Three.js', proof: 'The 360° player; most of the interfaces above.' },
+  { tool: 'MySQL · SQLite', proof: 'MySQL in the TTS pipeline; the SQLite node knowledge base behind Cursor for n8n.' },
+  { tool: 'React · Three.js', proof: 'The 360° player at SystemStar, ClimaVisor, 3dWebImg.' },
 ];
 
 export const learning =
-  'Right now: running my own VPS end to end (systemd, Caddy, Docker), Postgres internals, queues with retries and idempotency, and reading Designing Data-Intensive Applications.';
+  'Right now: going deep on ssh, curl, ngrok and system design.';
 
 export const skillsForResume = [
   { k: 'Languages', v: 'TypeScript, Python, JavaScript, SQL, C, Java' },
-  { k: 'Systems', v: 'Linux, ssh, ngrok, FFmpeg, HLS streaming, WebSockets, Git' },
-  { k: 'Backend & data', v: 'Node.js, Express, FastAPI, Postgres, MySQL, Redis, SQLite' },
+  { k: 'Systems', v: 'ssh, ngrok, FFmpeg, HLS streaming, WebSockets, Git, GCP, self-hosting' },
+  { k: 'Backend & data', v: 'Node.js, Express, MySQL, SQLite, Firebase, BunnyCDN' },
   { k: 'Frontend', v: 'React, Next.js, Three.js' },
-  { k: 'AI infra', v: 'PyTorch, CUDA, RunPod, RAG, MCP, LLM agents' },
+  { k: 'AI & compute', v: 'PyTorch, TensorFlow, CUDA, RunPod, RAG, MCP, LLM agents' },
 ];

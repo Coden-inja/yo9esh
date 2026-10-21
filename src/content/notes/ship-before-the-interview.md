@@ -18,7 +18,7 @@ By the time the interview happened, they already knew how I worked. The call was
 ## What I took from it
 
 - **Don't wait to feel ready** before applying.
-- **Job descriptions are incomplete by default.** The real requirements are in the conversation.
-- **Showing work early changes the outcome.** A working thing answers questions an interview can't.
+- **Job descriptions are incomplete by default.**
+- **Showing work early changes the outcome.**
 
 I'm still a student and still learning. But how you engage *before* the interview can matter more than the interview itself.
