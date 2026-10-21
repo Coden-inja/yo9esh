@@ -10,7 +10,8 @@ export type System = {
   id: string;
   title: string;
   kicker: string; // where/when, one line
-  summary: string;
+  summary: string; // one plain line: what it is
+  did: string[]; // two plain highlights
   metrics: { value: string; label: string }[];
   diagram: Graph;
   constraint: string;
@@ -28,11 +29,11 @@ export type System = {
 export const person = {
   name: 'Yogesh Kumar',
   role: 'Full-stack engineer',
-  headline: 'I design how the pieces connect.',
+  headline: 'Building is the one thing I never get bored of.', // Yogesh's own words
   intro:
-    'I build products end to end, and I care most about the parts in between: the pipelines, tunnels and protocols that decide whether a product actually works. Lately I go deep on a small set of tools instead of skimming ten stacks.',
+    'I’m Yogesh, a computer science student in Kolkata and an SDE intern at SystemStar. I build products end to end and care most about how their pieces connect. At SystemStar I made 4K 360° video start faster; on my own I moved an AI voice model from 48 GB server GPUs to an 8 GB gaming card.',
   location: 'Kolkata · from Gaya, Bihar',
-  now: 'SDE intern at SystemStar Infotech · B.Tech CSE at Heritage Institute of Technology, ’28',
+  now: '20+ hackathons · 4× winner · SIH ’24 finalist',
   email: 'fbyogesh111@gmail.com',
   phone: '+91-6204299438',
   showPhoneOnResume: true, // the website never shows the phone number
@@ -73,21 +74,24 @@ export const systems: System[] = [
     featured: true,
     name: 'Chatterbox TTS Pipeline',
     date: 'Jul 2026',
-    title: 'From 48 GB accelerators to an 8 GB GPU',
+    title: 'Made an AI voice model run on a gaming GPU',
     kicker: 'Chatterbox TTS pipeline · 2026',
-    summary:
-      'Automated voiceovers for 2,655+ real-estate listings. Listing text is cleaned into speakable text, then voiced by Chatterbox, whose memory grew with input length until it needed 48 GB accelerators.',
+    summary: 'Automatic voiceovers for 2,655+ property listings, using the Chatterbox text-to-speech model.',
+    did: [
+      'Split the model’s heaviest step into small chunks, so it needs ~5 GB of GPU memory instead of up to 80 GB.',
+      'Fixed the bugs that made the voice glitch or crash on long text, then moved it from 48 GB server GPUs to an RTX 3070.',
+    ],
     metrics: [
-      { value: '16–80 → 5 GB', label: 'VRAM, any input length' },
-      { value: '−87%', label: 'infra cost' },
-      { value: '2,655+', label: 'listings, zero OOM' },
+      { value: '48 → 8 GB', label: 'GPU it needs' },
+      { value: '−87%', label: 'running cost' },
+      { value: '2,655+', label: 'listings voiced' },
     ],
     diagram: {
       nodes: [
         { id: 'db', label: 'MySQL', detail: 'listing text', icon: 'si:mysql', col: 0, row: 0 },
         { id: 'clean', label: 'Text sanitizer', detail: 'Node.js · spoken form', icon: 'si:nodedotjs', col: 1, row: 0 },
         { id: 't3', label: 'Chatterbox T3', detail: 'text → speech tokens', icon: 'my:model', col: 2, row: 0 },
-        { id: 's3', label: 'S3Gen', detail: 'chunked · ~5 GB VRAM', icon: 'my:waveform', col: 3, row: 0, accent: true },
+        { id: 's3', label: 'S3Gen', detail: 'chunked · ~5 GB VRAM', icon: 'my:waveform', col: 3, row: 0, accent: true },
         { id: 'gpu', label: 'RTX 3070 · RunPod', detail: 'consumer GPUs', icon: 'si:nvidia', col: 2.5, row: 1 },
         { id: 'cdn', label: 'BunnyCDN', detail: 'voiceover audio', icon: 'si:bunnydotnet', col: 4, row: 0 },
       ],
@@ -101,15 +105,15 @@ export const systems: System[] = [
       ],
     },
     constraint:
-      'VRAM use was 16 GB at baseline and grew to 48–80 GB on long inputs, causing OOM crashes. Position overflows at token boundaries caused voice hallucinations.',
+      'VRAM use was 16 GB at baseline and grew to 48–80 GB on long inputs, causing OOM crashes. Position overflows at token boundaries caused voice hallucinations.',
     decision:
-      'Transformed S3Gen into bounded-memory chunked execution and patched the position overflows and token boundaries, so VRAM stays at ~5 GB at any length. Upstream, a Node.js sanitizer turns each listing into speakable text (house numbers, dimensions, currency, acronyms) capped at ~150 words.',
+      'Transformed S3Gen into bounded-memory chunked execution and patched the position overflows and token boundaries, so VRAM stays at ~5 GB at any length. Upstream, a Node.js sanitizer turns each listing into speakable text (house numbers, dimensions, currency, acronyms) capped at ~150 words.',
     stack: ['Python', 'PyTorch', 'CUDA', 'RunPod', 'Node.js', 'MySQL', 'BunnyCDN'],
     links: [],
     resume: [
-      'Rewrote S3Gen inference as bounded-memory chunked execution: VRAM went from 16 GB (48–80 GB on long inputs) to a stable ~5 GB at any length.',
+      'Rewrote S3Gen inference as bounded-memory chunked execution: VRAM went from 16 GB (48–80 GB on long inputs) to a stable ~5 GB at any length.',
       'Patched position overflows and token-boundary bugs, eliminating OOM crashes and voice hallucinations across 2,655+ automated listings.',
-      'Moved deployment from 48 GB accelerators to consumer GPUs (RTX 3070, RunPod), cutting infra cost by 87%.',
+      'Moved deployment from 48 GB accelerators to consumer GPUs (RTX 3070, RunPod), cutting infra cost by 87%.',
     ],
   },
   // Source: resume + Coden-inja/video-chunks abr_processor.py (probe, encoder pick, ladder,
@@ -117,13 +121,17 @@ export const systems: System[] = [
   {
     id: 'hls',
     featured: true,
-    title: 'A 360° player that starts fast',
+    title: '360° videos that start playing fast',
     kicker: 'SystemStar Infotech · 2025–26',
-    summary: 'A 360° video web player and the video pipeline that feeds it, built at SystemStar.',
+    summary: 'A 360° video player for the web, and the pipeline that prepares 4K footage for it. Built at SystemStar.',
+    did: [
+      'Built the player in React and Three.js, with camera controls.',
+      'Built an FFmpeg pipeline that turns raw 4K into adaptive streams cut into 2-second pieces, so playback starts sooner and quality follows the connection.',
+    ],
     metrics: [
-      { value: '4K', label: '360° source footage' },
-      { value: '2 s', label: 'HLS segments (vs 4 s)' },
-      { value: 'ABR', label: '720p → 4K ladder' },
+      { value: '4K', label: '360° footage' },
+      { value: '2 s', label: 'pieces, half the usual 4 s' },
+      { value: '720p → 4K', label: 'quality adapts' },
     ],
     diagram: {
       nodes: [
@@ -155,14 +163,17 @@ export const systems: System[] = [
     featured: true,
     name: 'CoralTeams · LAAF dev infra',
     date: 'May 2026',
-    title: 'LAAF: infra from a potato laptop',
+    title: 'Ran a 4 GB AI stack from a potato laptop, for $0',
     kicker: 'CoralTeams · Coral hackathon · 2026',
-    summary:
-      'CoralTeams is a self-hostable Teams interface I built for Coral, which connects tools like GitHub, Jira and Slack. It ships with a Docker image. The stack needed a 1 GB+ Rust engine and a 3 GB local LLM, and my laptop couldn’t run either.',
+    summary: 'CoralTeams, a self-hostable Teams app for Coral, built for the Coral hackathon. My laptop couldn’t run its Rust engine or its local AI model.',
+    did: [
+      'Ran the backend in GitHub Codespaces and the AI model on Google Colab’s free GPU, joined by ngrok tunnels. I call it LAAF: Laptop As A Frontend.',
+      'Shipped it with a Docker image, so anyone can host it themselves.',
+    ],
     metrics: [
       { value: '$0', label: 'per month' },
       { value: '4', label: 'free platforms, 2 tunnels' },
-      { value: '4 GB+', label: 'stack, off-laptop' },
+      { value: '4 GB+', label: 'stack, off-laptop' },
     ],
     diagram: {
       nodes: [
@@ -191,7 +202,7 @@ export const systems: System[] = [
       { label: 'Read the note', href: '/notes/laaf' },
     ],
     resume: [
-      'Built CoralTeams, a self-hostable Teams interface for Coral with a Docker image, and ran its 4 GB+ AI stack at $0/month across Vercel, GitHub Codespaces, Render and a Colab GPU joined by ngrok tunnels.',
+      'Built CoralTeams, a self-hostable Teams interface for Coral with a Docker image, and ran its 4 GB+ AI stack at $0/month across Vercel, GitHub Codespaces, Render and a Colab GPU joined by ngrok tunnels.',
     ],
   },
   // Source: Coden-inja/cursor-for-n8n (extension with Context7 n8n-docs retrieval; agents.ipynb
@@ -202,8 +213,11 @@ export const systems: System[] = [
     date: 'Jul – Sep 2025',
     title: 'Cursor for n8n',
     kicker: '1st prize · Ideatex, GDG on Campus HIT · 2025',
-    summary:
-      'Describe an automation in plain English, get an n8n workflow. A Chrome extension built in five days with Soumyadeep Bhowmik.',
+    summary: 'A Chrome extension that turns a plain-English request into an n8n automation. 1st prize at Ideatex, built in five days with Soumyadeep Bhowmik.',
+    did: [
+      'Gives the AI the relevant n8n docs before it writes, so it uses real nodes instead of made-up ones.',
+      'Prototyped a version that searches n8n’s full node library and workflow templates.',
+    ],
     metrics: [
       { value: 'First', label: 'of 400+ developers' },
       { value: '5 days', label: 'idea to pitch' },
@@ -237,10 +251,13 @@ export const systems: System[] = [
     id: 'agentsfx',
     name: 'AgentSFX · Godot add-on',
     date: 'Dec 2025',
-    title: 'One-click game audio for Godot',
+    title: 'One-click game sound for Godot',
     kicker: 'Track winner · Calcutta Hacks · Dec 2025',
-    summary:
-      'Searching for and creating sound effects is a tedious part of making a game. We built a Godot add-on that creates SFX, character voices, NPC dialogue and BGM with AI and integrates them in one click. Team 4bajesonewale, with Soumyadeep Bhowmik, Harsh Sinha and Amlan Roy.',
+    summary: 'A Godot add-on that creates sound effects, voices and music with AI and wires them into the game. Track winner at Calcutta Hacks with team 4bajesonewale.',
+    did: [
+      'An AI reads the game’s code and a screenshot and lists the sounds it needs.',
+      'ElevenLabs generates them, and the add-on adds them to the code in one click.',
+    ],
     metrics: [
       { value: 'Track winner', label: 'Calcutta Hacks' },
       { value: '1 click', label: 'generate + integrate' },
@@ -273,10 +290,13 @@ export const systems: System[] = [
   // with Gemini fallback; Summarizer / Composer / Spam cards) + GitHub stats + resume.
   {
     id: 'alchemailyst',
-    title: 'AlchEmaiLyst, and the community around it',
+    title: 'AlchEmaiLyst, an AI email assistant',
     kicker: 'Open source · GSSoC ’25 Project Admin',
-    summary:
-      'An email assistant with three agents: Summarizer, Composer and Spam. Then I opened it up through GirlScript Summer of Code and ran it as a project.',
+    summary: 'Summarise, write and send email with AI. I opened it up in GirlScript Summer of Code and ran it as Project Admin.',
+    did: [
+      'Took it to #1 on the Alchemyst AI leaderboard, with 30+ contributors and {stars}★.',
+      'Built Google sign-in and Gmail access, with Alchemyst AI writing the summaries and drafts.',
+    ],
     metrics: [
       { value: '{stars}★', label: 'GitHub stars' },
       { value: '30+', label: 'contributors onboarded' },
@@ -309,10 +329,13 @@ export const systems: System[] = [
     id: 'schedulo',
     name: 'Schedulo · local-AI Slack bot',
     date: 'Jan 2026',
-    title: 'A Slack scheduler with local AI',
+    title: 'A Slack bot that books meetings with local AI',
     kicker: 'Schedulo · Slack bot · Jan 2026',
-    summary:
-      'Most companies won’t let internal data touch ChatGPT or Gemini. So I built a Slack bot that schedules meetings right inside Slack, with the AI running fully locally on Ollama.',
+    summary: 'Mention the bot in Slack and the meeting lands on Google Calendar. The AI runs locally, so company chats never go to ChatGPT or Gemini.',
+    did: [
+      'A local Llama 3.2 model reads the message and works out what to book and when.',
+      'A small Google Apps Script creates the event, and the bot confirms in Slack.',
+    ],
     metrics: [
       { value: 'Local', label: 'Llama 3.2 on Ollama' },
       { value: '0', label: 'cloud LLM calls' },
@@ -351,7 +374,7 @@ export const noteDiagrams: Record<string, Graph> = {
       { id: 'ta', label: 'ngrok', detail: 'tunnel A', icon: 'si:ngrok', col: 1, row: 0 },
       { id: 'tb', label: 'ngrok', detail: 'tunnel B', icon: 'si:ngrok', col: 1, row: 1 },
       { id: 'cs', label: 'GitHub Codespaces', detail: 'heavy services', icon: 'si:github', col: 2, row: 0 },
-      { id: 'colab', label: 'Google Colab', detail: 'LLM, up to ~16 GB VRAM', icon: 'si:googlecolab', col: 2, row: 1 },
+      { id: 'colab', label: 'Google Colab', detail: 'LLM, up to ~16 GB VRAM', icon: 'si:googlecolab', col: 2, row: 1 },
     ],
     edges: [
       { from: 'laptop', to: 'ta' },
@@ -374,14 +397,13 @@ export const openSource = {
   ],
 };
 
-// Smaller builds: shown as a compact list, not case studies.
-export const builds = [
-  { name: 'Fullstack Odyssey', what: 'Interactive simulators for the event loop, SQL joins, JWT rotation, Redis queues and Git’s DAG.', href: 'https://fullstack-odyssey.vercel.app' },
-  { name: 'Lost & Found', what: 'Campus lost-and-found with Gemini auto-tagging and a scored matching engine. Built in 2 hours; won.', href: 'https://lost-and-found-pearl-theta.vercel.app' },
-  { name: 'Receipts.sh', what: 'Telegram bot that logs promises in group chats, nudges before deadlines and deletes leaked API keys.', href: 'https://github.com/Coden-inja/whodidwhat' },
-  { name: 'Moot Spiral Studio', what: 'Photos + music → 60 FPS Fibonacci-spiral video, rendered entirely in the browser.', href: 'https://fibo-anim.vercel.app' },
-  { name: '3dWebImg', what: 'Any 2D image into a 360° panorama, fully client-side.', href: 'https://3dwebimg.vercel.app' },
-  { name: 'ClimaVisor', what: 'Climate forecasts and history on an interactive 3D globe.', href: 'https://clima-visor.vercel.app' },
+// Interactive things people can open and play with (replaces the old "Also built" list).
+export const play = [
+  { name: '3dWebImg', icon: 'my:sphere', what: 'Turn any photo into a 360° view you can look around in.', href: 'https://3dwebimg.vercel.app' },
+  { name: 'Moot Spiral Studio', icon: 'my:spiral', what: 'Drop in photos and a song, get an endless Fibonacci-spiral video.', href: 'https://fibo-anim.vercel.app' },
+  { name: 'Fullstack Odyssey', icon: 'my:segments', what: 'Watch the Node event loop, SQL joins and Git move, step by step.', href: 'https://fullstack-odyssey.vercel.app' },
+  { name: 'ClimaVisor', icon: 'my:edge', what: 'Spin a 3D globe to explore climate forecasts and history.', href: 'https://clima-visor.vercel.app' },
+  { name: '3D Art Gallery', icon: 'my:gallery', what: 'Walk through a small gallery in first person (WASD + mouse).', href: 'https://coden-inja.github.io/3D-art-gallery/' },
 ];
 
 export const recognition = [
@@ -394,26 +416,16 @@ export const recognition = [
   { date: 'Sep 2024', event: 'HackHeritage', result: '3rd of 200', note: 'SIH college prelims' },
 ];
 
-export const moments = [
-  { photo: 'sih', caption: 'SIH 2024 Grand Finale', sub: 'KrishiSahayak · Ministry of Fisheries, Animal Husbandry & Dairying', position: '50% 30%' },
-  { photo: 'ideatex', caption: 'Ideatex, 1st prize', sub: 'GDG on Campus HIT · Session Zero 2025', position: '50% 55%' },
-  { photo: 'esummit', caption: 'e-Summit ’25: two podiums', sub: 'EDC, Heritage Institute of Technology', position: '50% 40%' },
-  { photo: 'tcs', caption: 'TCS hackathon win', sub: 'A two-hour build, after 8+ tries with the same partner', position: '50% 40%' },
+// "How I got here": Yogesh's own account (2026-10-22). Dates from his resumes and posts.
+export const story = [
+  { when: 'Class 9 · lockdown', text: 'Started coding because the COVID lockdown was boring. Learnt from YouTube for a month or two, then quit: it felt too hard, and I had no reason to keep going.' },
+  { when: 'Jan 2022', text: 'Stumbled into the GeeksforGeeks Bi-Wizard coding tournament, finished 78th of 400 and won a smartwatch. More school competitions and wins followed. By class 11 and 12 I was good at programming, but I still wasn’t building anything.' },
+  { when: 'Sep – Dec 2024', photo: 'sih', caption: 'SIH 2024 Grand Finale', text: 'In my first semester at Heritage Institute of Technology, our team placed 3rd of 200 at HackHeritage and made the Smart India Hackathon Grand Finale: some luck, but mostly because our groundwork, research and data collection were strong. We didn’t win, but now I had a purpose: to win, and to build.' },
+  { when: 'Jul 2025', photo: 'ideatex', caption: 'Ideatex, 1st prize', text: 'First win: 1st prize at Ideatex with Cursor for n8n. That summer I also ran AlchEmaiLyst as a Project Admin in GirlScript Summer of Code.' },
+  { when: 'Nov – Dec 2025', photo: 'esummit', caption: 'e-Summit ’25', text: 'Two podiums at e-Summit ’25, a track win at Calcutta Hacks, and an SDE internship at SystemStar, which I got by building a mock before the interview.', link: { label: 'That story', href: '/notes/ship-before-the-interview' } },
+  { when: 'Jul 2026', photo: 'tcs', caption: 'TCS hackathon', text: 'Won the TCS hackathon with Arunima Dutta after 8+ tries together: a full app in two hours.' },
+  { when: 'Now', text: 'Somewhere in 20+ hackathons I stopped caring about winning. Building became part of me. It’s the one thing I can tinker with for hours without getting bored. Right now I’m going deep on ssh, curl, ngrok and system design.' },
 ];
-
-// "Go deep, not wide": each tool earns its place with proof.
-export const toolbelt = [
-  { tool: 'ssh', proof: 'SSH into GitHub Codespaces with the GitHub CLI to run heavy services remotely (LAAF).' },
-  { tool: 'ngrok / tunnels', proof: 'Joined three free clouds into one dev stack for LAAF.' },
-  { tool: 'FFmpeg + HLS', proof: 'The 4K → adaptive-stream pipeline at SystemStar.' },
-  { tool: 'TypeScript · Node', proof: 'The listing-text sanitizer behind the TTS pipeline; AlchEmaiLyst’s OAuth and Gmail flows.' },
-  { tool: 'Python · PyTorch · CUDA', proof: 'Rewrote model inference to fit an 8 GB GPU.' },
-  { tool: 'MySQL · SQLite', proof: 'MySQL in the TTS pipeline; the SQLite node knowledge base behind Cursor for n8n.' },
-  { tool: 'React · Three.js', proof: 'The 360° player at SystemStar, ClimaVisor, 3dWebImg.' },
-];
-
-export const learning =
-  'Right now: going deep on ssh, curl, ngrok and system design.';
 
 export const skillsForResume = [
   { k: 'Languages', v: 'TypeScript, Python, JavaScript, SQL, C, Java' },

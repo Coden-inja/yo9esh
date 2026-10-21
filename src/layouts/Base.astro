@@ -82,8 +82,8 @@ const personLd = {
         <a href="/" class="mark" aria-label="Home">yo<span>9</span>esh</a>
         <nav>
           <a href="/#work">Work</a>
-          <a href="/#notes">Notes</a>
-          <a href="/#about">About</a>
+          <a href="/#story">Story</a>
+          <a href="/#writing">Writing</a>
           <a href="/resume">Resume</a>
           <button class="theme" type="button" aria-label="Toggle dark mode">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1Z"/></svg>
@@ -95,7 +95,10 @@ const personLd = {
     {!bare && (
       <footer class="wrap foot">
         <span>© {new Date().getFullYear()} {person.name}</span>
-        <span class="mono">Built with Astro · no trackers · <a href="https://github.com/Coden-inja/yo9esh">source</a></span>
+        <span class="mono">
+          <span class="timing" title="Measured in your browser with the Navigation Timing API">this page loaded in <b>…</b> ms</span>
+          · Built with Astro · no trackers · <a href="https://github.com/Coden-inja/yo9esh">source</a>
+        </span>
       </footer>
     )}
     <script is:inline>
@@ -107,6 +110,13 @@ const personLd = {
         root.dataset.theme = dark ? 'light' : 'dark';
         try { localStorage.setItem('theme', root.dataset.theme); } catch {}
       });
+      // footer easter egg: real load time of this page on the visitor's connection
+      addEventListener('load', () => setTimeout(() => {
+        const [nav] = performance.getEntriesByType('navigation');
+        const el = document.querySelector('.timing b');
+        if (nav && el) el.textContent = Math.round((nav.loadEventEnd || nav.domContentLoadedEventEnd) - nav.startTime);
+        else document.querySelector('.timing')?.remove();
+      }, 0));
     </script>
   </body>
 </html>
@@ -126,7 +136,8 @@ const personLd = {
     border: 1px solid var(--line); background: transparent; color: var(--ink-2); cursor: pointer;
   }
   .theme:hover { color: var(--ink); border-color: var(--ink-2); }
-  @media (max-width: 480px) { nav a[href='/#notes'] { display: none; } }
+  @media (max-width: 480px) { nav a[href='/#writing'] { display: none; } }
+  .timing b { color: var(--accent-ink); font-weight: 600; }
   .foot {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
     padding-top: 28px; padding-bottom: 40px; border-top: 1px solid var(--line);
