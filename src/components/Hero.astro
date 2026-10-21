@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import avatar from '../assets/photos/avatar.png';
+import avatar from '../assets/photos/avatar-blue.png';
 import { person } from '../data/profile';
 
 const rows = [
@@ -14,7 +14,7 @@ const rows = [
 <section class="hero wrap">
   <div class="copy">
     <p class="hello">
-      <Image src={avatar} alt="" width={88} height={88} class="avatar" />
+      <Image src={avatar} alt="Yogesh Kumar" width={144} height={144} class="avatar" />
       <span>Hi, I’m <strong>{person.name.split(' ')[0]}</strong>, {person.role.toLowerCase()}.</span>
     </p>
     <h1>I design how the <em>pieces</em> connect.</h1>
@@ -81,7 +81,9 @@ const rows = [
   @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } }
 
   .hello { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; color: var(--ink-2); }
-  .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+  .hello { gap: 16px; font-size: 1.05rem; }
+  .avatar { width: 72px; height: 72px; flex: none; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+  @media (max-width: 560px) { .avatar { width: 56px; height: 56px; } }
   h1 em { color: var(--accent-ink); }
   .intro { font-size: 1.12rem; color: var(--ink-2); max-width: 36em; margin: 24px 0 12px; }
   .now { font-size: 0.78rem; color: var(--muted); margin: 0 0 28px; }
