@@ -163,40 +163,6 @@ export const systems: System[] = [
     ],
   },
   {
-    id: 'sigscope',
-    name: 'SIG-SCOPE · Smart India Hackathon 2026',
-    date: 'Oct 2026',
-    title: 'A signal analyser that refuses to guess',
-    kicker: 'SIG-SCOPE · Smart India Hackathon 2026',
-    summary:
-      'Blind analysis of raw radio captures (.iq / .wav): work out the modulation, baud rate and bandwidth with no metadata. Problem statement SIH26147, Space Technology.',
-    metrics: [
-      { value: '5', label: 'modulations, BPSK → 64QAM' },
-      { value: 'FFT · STFT', label: 'spectrum + waterfall' },
-      { value: 'Live', label: 'deployed demo' },
-    ],
-    diagram: [
-      { nodes: [{ label: '.iq / .wav', detail: 'raw capture' }] },
-      { via: 'samples', nodes: [{ label: 'Python DSP', detail: 'FFT · cumulants · Viterbi' }] },
-      { via: 'estimate', nodes: [{ label: 'Honesty gate', detail: 'measure or abstain', accent: true }] },
-      { via: 'json', nodes: [{ label: 'Next.js', detail: 'canvas plots' }] },
-    ],
-    constraint:
-      'Black-box classifiers always return an answer, even on noise. For signal intelligence, a confident wrong answer is worse than none.',
-    decision:
-      'Deterministic DSP (higher-order cumulants, Oerder–Meyr timing recovery, Viterbi decoding) behind a gate that returns an explicit abstention when the maths doesn’t converge.',
-    tradeoff:
-      'It says “unknown” more often than an ML model would. Every number it does show can be traced back to the maths.',
-    stack: ['Python', 'NumPy', 'SciPy', 'Next.js', 'Canvas'],
-    links: [
-      { label: 'Live', href: 'https://sigscope.vercel.app' },
-      { label: 'Code', href: 'https://github.com/Coden-inja/sigscope' },
-    ],
-    resume: [
-      'Built a blind signal-analysis engine (cumulants, Oerder–Meyr timing recovery, Viterbi) that abstains rather than guesses, with a Next.js canvas front end.',
-    ],
-  },
-  {
     id: 'n8n',
     name: 'Cursor for n8n',
     date: 'Jul – Sep 2025',
