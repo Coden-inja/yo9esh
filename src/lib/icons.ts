@@ -34,10 +34,6 @@ const own: Record<string, string> = {
   chat: `<path d="M4 5h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 17h-9.5l-4.5 3.5V17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5z" class="s"/><path d="M10.6 8.2l-1 6.3M14.4 8.2l-1 6.3M8.3 10h7.4M7.9 12.7h7.4" class="as"/>`,
   // documentation: a page with a folded corner and an accent heading line
   docs: `<path d="M6 3h8.5L19 7.5V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" class="bg"/><path d="M14.5 3v4.5H19"/><path d="M8.5 11h7" class="as"/><path d="M8.5 14.5h7M8.5 17.5h4.5"/>`,
-  // golden spiral (Moot Spiral Studio), centre dot lit
-  spiral: `<path d="M12 12.5a1.5 1.5 0 1 1 1.5-1.5c0 2.5-2 4-4.5 4a4.5 4.5 0 0 1 0-9c4 0 7 3 7 7a7.5 7.5 0 0 1-15 0"/><circle cx="12" cy="11" r="1.4" class="a"/>`,
-  // a framed picture on a wall (3D Art Gallery)
-  gallery: `<rect x="3.5" y="4.5" width="17" height="13" rx="1.5" class="bg"/><path d="M6.5 14.5l3.5-4 2.8 3 1.8-2 2.9 3"/><circle cx="15.5" cy="8.3" r="1.4" class="a"/><path d="M2.5 20.5h19"/>`,
   // LinkedIn isn't in Simple Icons, so a plain "in" mark in the same style
   linkedin: `<rect x="3" y="3" width="18" height="18" rx="3.5"/><path d="M8 10.5V16M8 7.6v.1M11.5 16v-5.5M11.5 13c0-1.7 1-2.6 2.3-2.6s2.2.9 2.2 2.6V16"/>`,
 };
