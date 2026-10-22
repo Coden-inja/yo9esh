@@ -1,90 +1,119 @@
 ---
-// Origin story as a strip of manga panels. On wide screens Motion.astro pins the
-// section and scrolls the strip sideways; otherwise it's a normal horizontal scroller
-// (or a vertical stack on phones).
+// Origin story laid out like a manga page: short text episodes are stacked two to a
+// column, photo episodes get a tall column (photo fills the space under the text), and
+// the finale is a full red panel with the line set large. Desktop + motion: the section
+// is pinned and the strip scrolls sideways (Motion.astro). Phones: a vertical stack.
 import { Image } from 'astro:assets';
 import { episodes } from '../data/profile';
 import sih from '../assets/hero/sih-tone.png';
 import sing from '../assets/hero/sing-tone.png';
 
+type Ep = (typeof episodes)[number] & { photo?: string; special?: boolean; quote?: string; link?: { label: string; href: string } };
 const photos = { sih, sing } as const;
 const alts: Record<string, string> = {
   sih: 'Yogesh at the Smart India Hackathon 2024 Grand Finale',
   sing: 'Yogesh singing on stage, mic in hand',
 };
+
+// group into page columns: text episodes pair up, photo episodes and the finale stand alone
+const columns: { kind: 'pair' | 'photo' | 'finale'; eps: Ep[] }[] = [];
+(episodes as Ep[]).forEach((e, i) => {
+  const last = i === episodes.length - 1;
+  if (last) columns.push({ kind: 'finale', eps: [e] });
+  else if (e.photo) columns.push({ kind: 'photo', eps: [e] });
+  else {
+    const prev = columns.at(-1);
+    if (prev?.kind === 'pair' && prev.eps.length < 2) prev.eps.push(e);
+    else columns.push({ kind: 'pair', eps: [e] });
+  }
+});
 ---
 <div class="strip-wrap" data-strip>
   <ol class="strip">
-    {episodes.map((e, i) => (
-      <li class:list={['panel', { photo: e.photo, special: e.special, last: i === episodes.length - 1 }]}>
-        <span class="ep" aria-hidden="true">EP.{e.ep}</span>
-        <span class="jp" aria-hidden="true" lang="ja">{e.jp}</span>
-        <p class="when mono">{e.when}</p>
-        <h3>{e.title}</h3>
-        <p class="line">
-          {e.line}
-          {e.link && <> <a href={e.link.href}>{e.link.label} →</a></>}
-        </p>
-        {e.photo && (
-          <Image src={photos[e.photo as keyof typeof photos]} alt={alts[e.photo]} widths={[360, 680]} sizes="340px" class="shot" />
-        )}
+    {columns.map((col) => (
+      <li class:list={['col', col.kind]}>
+        {col.eps.map((e) => (
+          <article class:list={['panel', { special: e.special }]}>
+            <header>
+              <span class="ep" aria-hidden="true">EP.{e.ep}</span>
+              <span class="jp" aria-hidden="true" lang="ja">{e.jp}</span>
+            </header>
+            <p class="when mono">{e.when}</p>
+            <h3>{e.title}</h3>
+            <p class="line">
+              {e.line}
+              {e.link && <> <a href={e.link.href}>{e.link.label} →</a></>}
+            </p>
+            {e.quote && <p class="quote">“{e.quote}”</p>}
+            {e.photo && (
+              <div class="shot-wrap">
+                <Image src={photos[e.photo as keyof typeof photos]} alt={alts[e.photo]} widths={[400, 800]} sizes="400px" class="shot" />
+              </div>
+            )}
+          </article>
+        ))}
       </li>
     ))}
   </ol>
 </div>
 
 <style>
-  .strip-wrap { overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 0 22px; }
+  .strip-wrap { overflow-x: auto; padding: 6px 0 22px; }
   :global(html.motion) .strip-wrap { overflow: visible; }
   .strip {
     list-style: none; margin: 0;
-    /* first panel lines up with the page column; the strip runs full-bleed to the right */
+    /* first column lines up with the page; the strip runs full-bleed to the right */
     padding: 0 var(--gutter) 0 max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
-    display: flex; gap: 22px; width: max-content;
+    display: flex; gap: 14px; width: max-content;
+    height: var(--strip-h, 520px);
   }
-  .panel {
-    position: relative; flex: none; width: 360px; min-height: 440px; box-sizing: border-box;
-    /* desktop + motion: panels are sized to the screen (see .pinned below) */
-    padding: 26px 24px 24px; scroll-snap-align: start; overflow: hidden;
-    background: var(--surface); border: 2px solid var(--ink); border-radius: 3px;
-    display: flex; flex-direction: column;
-  }
-  .panel.photo { width: 420px; }
-  .panel.last { background: var(--accent); color: #121110; border-color: #121110; }
-  /* special episode: inverted ink panel, like an anime 'SP' between arcs */
-  .panel.special { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .special .ep { -webkit-text-stroke-color: var(--bg); }
-  .special .jp, .special .line { color: var(--bg); }
-  .special .shot { filter: drop-shadow(4px 4px 0 var(--accent)); }
-  .ep { font: 400 3.4rem/.9 var(--display); color: transparent; -webkit-text-stroke: 1.5px var(--accent); }
-  .last .ep { -webkit-text-stroke-color: #121110; }
-  .jp {
-    position: absolute; right: 14px; top: 18px; writing-mode: vertical-rl;
-    font: 900 2rem/1 var(--jp); letter-spacing: .06em; color: var(--ink); opacity: .9;
-  }
-  .when { margin: 18px 0 6px; font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); }
-  .last .when { color: #121110; }
-  h3 { margin: 0 0 12px; padding-right: 2.6rem; font: 400 2.1rem/.95 var(--display); letter-spacing: .01em; text-transform: uppercase; }
-  .line { margin: 0; font-size: .98rem; line-height: 1.55; color: var(--ink-2); }
-  .last .line { color: #121110; font-weight: 500; }
-  .shot { width: 100%; height: auto; margin-top: auto; padding-top: 16px; filter: drop-shadow(4px 4px 0 var(--ink)); }
+  .col { flex: none; display: flex; flex-direction: column; gap: 14px; height: 100%; }
+  .pair { width: 340px; }
+  .photo { width: 400px; }
+  .finale { width: 480px; }
 
-  /* when the story is pinned, every panel fits the remaining viewport height */
-  /* pinned story: text panels hug their text and stagger up/down like a manga page;
-     only photo panels take the full strip height */
-  :global(html.motion) .strip { align-items: center; height: var(--strip-h, auto); }
-  @media (min-width: 900px) {
-    :global(html.motion) .panel { min-height: 0; height: auto; max-height: 100%; padding: 22px 22px 20px; }
-    /* one clean row: every panel the same height, photos fill the space below their text */
-    :global(html.motion) .panel { height: min(100%, 460px); }
-    :global(html.motion) .panel h3 { font-size: clamp(1.5rem, 2.6vh, 2.1rem); }
-    :global(html.motion) .panel .line { font-size: .92rem; }
-    :global(html.motion) .panel .ep { font-size: clamp(2.2rem, 5vh, 3.4rem); }
-    :global(html.motion) .shot { min-height: 0; flex: 1 1 auto; object-fit: cover; object-position: 50% 20%; }
+  .panel {
+    position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; box-sizing: border-box;
+    display: flex; flex-direction: column; padding: 18px 20px;
+    background: var(--surface); border: 2px solid var(--ink);
   }
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .ep { font: 400 clamp(1.8rem, 4vh, 2.6rem)/.9 var(--display); color: transparent; -webkit-text-stroke: 1.5px var(--accent); }
+  .jp { font: 900 1.25rem/1 var(--jp); letter-spacing: .06em; color: var(--ink); }
+  .when { margin: 10px 0 4px; font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); }
+  h3 { margin: 0 0 8px; font: 400 clamp(1.3rem, 2.8vh, 1.8rem)/.95 var(--display); letter-spacing: .01em; text-transform: uppercase; }
+  .line { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--ink-2); }
+
+  /* photo column: the image takes whatever height is left under the text */
+  .shot-wrap { flex: 1 1 auto; min-height: 120px; margin-top: 14px; overflow: hidden; border: 2px solid var(--ink); }
+  .shot { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
+
+  /* special episode: inverted ink panel */
+  .special { background: var(--ink); border-color: var(--ink); }
+  .special .ep { -webkit-text-stroke-color: var(--bg); }
+  .special .jp, .special .line, .special h3 { color: var(--bg); }
+  .special .shot-wrap { border-color: var(--accent); }
+
+  /* finale: full red panel, the line set large and anchored to the bottom */
+  .finale .panel { background: var(--accent); border-color: #121110; color: #121110; padding: 22px 26px; }
+  .finale .ep { -webkit-text-stroke-color: #121110; }
+  .finale .jp, .finale .when, .finale .line { color: #121110; }
+  .finale .quote {
+    margin: auto 0 0; padding-top: 16px;
+    font: 400 clamp(2.2rem, 5.6vh, 3.6rem)/.95 var(--display); letter-spacing: .01em; text-transform: uppercase; color: #121110;
+  }
+
+  /* short laptop screens: tighten so a pair of text panels always fits half the strip */
+  @media (max-height: 760px) {
+    .panel { padding: 14px 16px; }
+    .line { font-size: .84rem; line-height: 1.45; }
+  }
+
   @media (max-width: 720px) {
     .strip-wrap { overflow: visible; }
-    .strip { flex-direction: column; width: auto; }
-    .panel, .panel.photo { width: auto; min-height: 0; }
+    .strip { flex-direction: column; width: auto; height: auto; padding: 0 var(--gutter); }
+    .col, .pair, .photo, .finale { display: contents; }
+    .panel { flex: none; }
+    .shot-wrap { height: 300px; flex: none; }
   }
 </style>

@@ -148,14 +148,14 @@ export const systems: System[] = [
     links: [],
     resume: [],
   },
-  // Source: LinkedIn LAAF post + Coden-inja/Coral-Workspace code (Vercel → ngrok A → FastAPI on
+  // Source: LinkedIn "potato laptop" post + Coden-inja/Coral-Workspace code (Vercel → ngrok A → FastAPI on
   // Codespaces → ngrok B → Ollama on Colab; semantic engine with Coral CLI on Render).
   {
     id: 'laaf',
     featured: true,
-    name: 'CoralTeams · LAAF dev infra',
+    name: 'CoralTeams',
     date: 'May 2026',
-    title: 'LAAF: infra from a potato laptop',
+    title: 'A 4 GB AI stack from a potato laptop',
     kicker: 'CoralTeams · Coral hackathon · 2026',
     summary:
       'CoralTeams is a self-hostable Teams interface I built for Coral, which connects tools like GitHub, Jira and Slack. It ships with a Docker image. The stack needed a 1 GB+ Rust engine and a 3 GB local LLM, and my laptop couldn’t run either.',
@@ -403,8 +403,8 @@ export const moments = [
 
 // "Go deep, not wide": each tool earns its place with proof.
 export const toolbelt = [
-  { tool: 'ssh', proof: 'SSH into GitHub Codespaces with the GitHub CLI to run heavy services remotely (LAAF).' },
-  { tool: 'ngrok / tunnels', proof: 'Joined three free clouds into one dev stack for LAAF.' },
+  { tool: 'ssh', proof: 'SSH into GitHub Codespaces with the GitHub CLI to run heavy services remotely.' },
+  { tool: 'ngrok / tunnels', proof: 'Joined free clouds into one dev stack for CoralTeams.' },
   { tool: 'FFmpeg + HLS', proof: 'The 4K → adaptive-stream pipeline at SystemStar.' },
   { tool: 'TypeScript · Node', proof: 'The listing-text sanitizer behind the TTS pipeline; AlchEmaiLyst’s OAuth and Gmail flows.' },
   { tool: 'Python · PyTorch · CUDA', proof: 'Rewrote model inference to fit an 8 GB GPU.' },
@@ -434,7 +434,7 @@ export const episodes = [
   { ep: '04', title: 'First Win', jp: '初勝利', when: 'Jul 2025', line: '1st prize at Ideatex with Cursor for n8n. Then Project Admin for AlchEmaiLyst in GSSoC.' },
   { ep: '05', title: 'Ship Before the Interview', jp: '先に作る', when: 'Dec 2025', line: 'Got an SDE internship at SystemStar by building a mock before the interview.', link: { label: 'Read it', href: '/notes/ship-before-the-interview' } },
   { ep: 'SP', title: 'Off the Keyboard', jp: '歌', when: 'Side story', line: 'I sing, on stage whenever I get the chance. I’m a music person, so this page has its own lo-fi, made live in your browser: press 9.', photo: 'sing', special: true },
-  { ep: '06', title: 'For the Love of Building', jp: '作る喜び', when: 'Now', line: '20+ hackathons later I stopped caring about winning. Building is the one thing I never get bored of.' },
+  { ep: '06', title: 'For the Love of Building', jp: '作る喜び', when: 'Now', line: '20+ hackathons later I stopped caring about winning.', quote: 'Building is the one thing I never get bored of.' },
 ];
 
 // Interactive projects only, each bound to a key on the keyboard row.

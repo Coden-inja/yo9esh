@@ -1,5 +1,5 @@
 ---
-title: 'LAAF: running a 4 GB AI stack from a potato laptop'
+title: 'Running a 4 GB AI stack from a potato laptop'
 description: 'A no-card, no-hassle way to run heavy services: Codespaces + Colab + ngrok, with the laptop as just the frontend.'
 order: 1
 system: laaf
@@ -31,4 +31,4 @@ I couldn't deploy them. I couldn't even *test* them. My options were:
 
 Test it all, then switch to a persistent server later.
 
-I call it **LAAF: Laptop As A Frontend**. The heavy lifting goes to cloud providers, for free.
+The heavy lifting goes to cloud providers, for free.

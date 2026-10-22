@@ -1,5 +1,4 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import ColdOpen from '../components/ColdOpen.astro';
 import AnimeHero from '../components/AnimeHero.astro';
@@ -18,7 +17,6 @@ import { getStars } from '../lib/github';
 const stars = await getStars('Coden-inja/alchEmaiLyst', 42);
 const featured = systems.filter((s) => s.featured);
 const more = systems.filter((s) => !s.featured);
-const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.data.order);
 ---
 <Base>
   <ColdOpen />
@@ -50,21 +48,7 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
     <SideQuests />
   </section>
 
-  <section id="notes" class="wrap" data-jump="4">
-    <EpTitle ep="04" title="Field Notes" jp="記録" sub="from my LinkedIn" />
-    <div class="chapters">
-      {notes.map((n, i) => (
-        <a class="chapter" href={`/notes/${n.id}`}>
-          <span class="ch" aria-hidden="true">CH.{String(i + 1).padStart(2, '0')}</span>
-          <h3>{n.data.title}</h3>
-          <p>{n.data.description}</p>
-          <span class="read mono">Read →</span>
-        </a>
-      ))}
-    </div>
-  </section>
-
-  <section id="contact" class="wrap" data-jump="5">
+  <section id="contact" class="wrap" data-jump="4">
     <ToBeContinued />
   </section>
 
@@ -81,7 +65,7 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
     :global(html.motion) #story {
       height: 100svh; box-sizing: border-box; padding: 76px 0 26px;
       display: flex; flex-direction: column; justify-content: center;
-      --strip-h: calc(100svh - 76px - 26px - var(--title-h, 230px) - 28px);
+      --strip-h: calc(100svh - 76px - 26px - var(--title-h, 200px) - 22px);
     }
   }
 
@@ -101,17 +85,4 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
   .more[open] .close-label { display: inline; }
   .more[open] summary { margin-bottom: 40px; }
 
-  .chapters { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
-  @media (max-width: 720px) { .chapters { grid-template-columns: 1fr; } }
-  .chapter {
-    position: relative; display: flex; flex-direction: column; gap: 10px; padding: 26px 26px 22px;
-    text-decoration: none; color: var(--ink); background: var(--surface);
-    border: 2px solid var(--ink); border-radius: 4px; box-shadow: 7px 7px 0 var(--ink);
-    transition: transform .15s, box-shadow .15s;
-  }
-  .chapter:hover { transform: translate(-3px, -3px); box-shadow: 10px 10px 0 var(--accent); color: var(--ink); }
-  .ch { font: 400 3rem/.9 var(--display); color: transparent; -webkit-text-stroke: 1.5px var(--accent); }
-  .chapter h3 { margin: 0; font: 400 1.9rem/1 var(--display); text-transform: uppercase; letter-spacing: .01em; }
-  .chapter p { margin: 0; color: var(--ink-2); font-size: .95rem; }
-  .read { margin-top: auto; font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-ink); }
 </style>
