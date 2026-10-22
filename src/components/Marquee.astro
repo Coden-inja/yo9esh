@@ -22,9 +22,7 @@ const line = achievements.map((a) => `${a} ★ `).join('');
   .track { display: inline-flex; will-change: transform; }
   .track span { padding-right: .4em; }
   /* fallback drift when JS/motion is off */
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html:not(.motion)) .red .track { animation: drift 40s linear infinite; }
-    :global(html:not(.motion)) .ink .track { animation: drift 46s linear infinite reverse; }
-  }
+  :global(html:not(.motion)) .red .track { animation: drift 40s linear infinite; }
+  :global(html:not(.motion)) .ink .track { animation: drift 46s linear infinite reverse; }
   @keyframes drift { to { transform: translateX(-50%); } }
 </style>

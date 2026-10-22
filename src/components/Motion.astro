@@ -13,9 +13,9 @@
   const root = document.documentElement;
   const $$ = <T extends Element = HTMLElement>(s: string, el: ParentNode = document) => [...el.querySelectorAll<T>(s)];
 
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    gsap.registerPlugin(ScrollTrigger);
-    root.classList.add('motion');
+  // Run motion & smooth scroll unconditionally on all devices
+  gsap.registerPlugin(ScrollTrigger);
+  root.classList.add('motion');
 
     const lenis = new Lenis({ lerp: 0.1 });
     (window as unknown as { __lenis: Lenis }).__lenis = lenis;
@@ -127,7 +127,6 @@
     // layout changes that move later triggers
     document.fonts?.ready.then(() => ScrollTrigger.refresh());
     $$('details').forEach((d) => d.addEventListener('toggle', () => ScrollTrigger.refresh()));
-  }
 </script>
 
 <style>

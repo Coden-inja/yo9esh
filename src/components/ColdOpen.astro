@@ -42,14 +42,26 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
   import { play } from '../lib/lofi';
 
   const root = document.documentElement;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isDebug = new URLSearchParams(location.search).has('debug');
+  const log = (...args: any[]) => { if (isDebug) console.log('[intro]', ...args); };
+
   let stage: 'gate' | 'play' | 'done' = 'gate';
   let timers: number[] = [];
+
+  // Watchdog: if intro takes more than 3.5s total or gets stuck, force finish cleanly
+  const watchdog = window.setTimeout(() => {
+    if (stage !== 'done' && root.classList.contains('op')) {
+      log('Watchdog triggered: forcing intro to complete');
+      finish(false);
+    }
+  }, 3500);
 
   function finish(withSound: boolean) {
     if (stage === 'done') return;
     stage = 'done';
+    clearTimeout(watchdog);
     timers.forEach(clearTimeout);
+    log('Finish called, transitioning to home');
     root.classList.add('op-out', 'ready');
     if (withSound) play();
     setTimeout(() => root.classList.remove('op', 'op-play', 'op-out'), 560);
@@ -58,8 +70,8 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
   function enter(withSound: boolean) {
     if (stage !== 'gate') return;
     stage = 'play';
+    log('Enter called, withSound:', withSound);
     if (!withSound) setClicks(false);
-    if (reduce) { finish(withSound); return; }
     const go = () => {
       root.classList.add('op-play');
       timers = [window.setTimeout(() => finish(withSound), 2700)];
@@ -67,8 +79,13 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     if (!withSound) { go(); return; }
     // Sounds are triggered by the animations themselves (animationstart fires when each
     // CSS animation actually begins, after its delay), so every hit lands on its frame.
-    const cue = (sel: string, name: string, fn: () => void) =>
-      document.querySelector(sel)!.addEventListener('animationstart', (e) => { if ((e as AnimationEvent).animationName.includes(name)) fn(); });
+    const cue = (sel: string, name: string, fn: () => void) => {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      el.addEventListener('animationstart', (e) => {
+        if ((e as AnimationEvent).animationName.includes(name)) fn();
+      });
+    };
     cue('.cold .kana', 'kana', () => whoosh(0, 0.5));
     cue('.cold .t1', 'slam', () => impact(0, 1));
     cue('.cold .t2', 'wipe', () => impact(0, 0.5));
@@ -89,8 +106,12 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     if ((e.target as HTMLElement).closest('button')) return;
     if (stage === 'gate') enter(true); else if (stage === 'play') finish(true);
   });
-  if (!root.classList.contains('op')) root.classList.add('ready');
-  else (document.querySelector('[data-start]') as HTMLElement).focus({ preventScroll: true });
+  if (!root.classList.contains('op')) {
+    clearTimeout(watchdog);
+    root.classList.add('ready');
+  } else {
+    (document.querySelector('[data-start]') as HTMLElement).focus({ preventScroll: true });
+  }
 </script>
 
 <style>
@@ -161,5 +182,5 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
   @keyframes wipe { to { clip-path: inset(0 0 0 0); } }
   @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes shake { 0% { transform: translate(6px, -4px); } 50% { transform: translate(-5px, 4px); } 100% { transform: none; } }
-  @media (prefers-reduced-motion: reduce) { .blink { animation: none; } }
+
 </style>

@@ -166,7 +166,6 @@ const rays = Array.from({ length: N }, (_, i) => {
   /* while the lo-fi plays, the slab kicks on every beat */
   .slab { transition: filter .25s ease-out, background-position .25s ease-out; }
   :global(html.beat) .slab { filter: brightness(1.12) saturate(1.1); background-position: 6px 0, 0 0; transition: none; }
-  @media (prefers-reduced-motion: reduce) { :global(html.beat) .slab { filter: none; background-position: 0 0; } }
 
   /* giant outlined name behind the figure */
   .ghost {
@@ -262,5 +261,5 @@ const rays = Array.from({ length: N }, (_, i) => {
     .type { box-shadow: 5px 5px 0 var(--ink); }
     .words { font-size: 1.02rem; }
   }
-  @media (prefers-reduced-motion: reduce) { .ch.cur::before { animation: none; } }
+
 </style>

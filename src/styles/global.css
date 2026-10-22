@@ -124,7 +124,4 @@ section { padding-block: clamp(48px, 7vw, 88px); }
 .ic.own .s { fill: var(--accent-soft); }
 .ic.own .bg { fill: var(--surface); }
 
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
+
