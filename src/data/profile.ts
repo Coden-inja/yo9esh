@@ -433,6 +433,7 @@ export const episodes = [
   { ep: '03', title: 'The Finale', jp: '決勝', when: 'Dec 2024', line: 'First semester. Some luck, mostly groundwork: our team made the Smart India Hackathon Grand Finale. We lost, and I found a purpose: to win, and to build.', photo: 'sih' },
   { ep: '04', title: 'First Win', jp: '初勝利', when: 'Jul 2025', line: '1st prize at Ideatex with Cursor for n8n. Then Project Admin for AlchEmaiLyst in GSSoC.' },
   { ep: '05', title: 'Ship Before the Interview', jp: '先に作る', when: 'Dec 2025', line: 'Got an SDE internship at SystemStar by building a mock before the interview.', link: { label: 'Read it', href: '/notes/ship-before-the-interview' } },
+  { ep: 'SP', title: 'Off the Keyboard', jp: '歌', when: 'Side story', line: 'I sing, on stage whenever I get the chance. I’m a music person, so this page has its own lo-fi, made live in your browser: press 9.', photo: 'sing', special: true },
   { ep: '06', title: 'For the Love of Building', jp: '作る喜び', when: 'Now', line: '20+ hackathons later I stopped caring about winning. Building is the one thing I never get bored of.' },
 ];
 

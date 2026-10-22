@@ -5,13 +5,18 @@
 import { Image } from 'astro:assets';
 import { episodes } from '../data/profile';
 import sih from '../assets/hero/sih-tone.png';
+import sing from '../assets/hero/sing-tone.png';
 
-const photos = { sih } as const;
+const photos = { sih, sing } as const;
+const alts: Record<string, string> = {
+  sih: 'Yogesh at the Smart India Hackathon 2024 Grand Finale',
+  sing: 'Yogesh singing on stage, mic in hand',
+};
 ---
 <div class="strip-wrap" data-strip>
   <ol class="strip">
     {episodes.map((e, i) => (
-      <li class:list={['panel', { photo: e.photo, last: i === episodes.length - 1 }]}>
+      <li class:list={['panel', { photo: e.photo, special: e.special, last: i === episodes.length - 1 }]}>
         <span class="ep" aria-hidden="true">EP.{e.ep}</span>
         <span class="jp" aria-hidden="true" lang="ja">{e.jp}</span>
         <p class="when mono">{e.when}</p>
@@ -21,7 +26,7 @@ const photos = { sih } as const;
           {e.link && <> <a href={e.link.href}>{e.link.label} →</a></>}
         </p>
         {e.photo && (
-          <Image src={photos[e.photo as keyof typeof photos]} alt="Yogesh at the Smart India Hackathon 2024 Grand Finale" widths={[360, 680]} sizes="340px" class="shot" />
+          <Image src={photos[e.photo as keyof typeof photos]} alt={alts[e.photo]} widths={[360, 680]} sizes="340px" class="shot" />
         )}
       </li>
     ))}
@@ -47,6 +52,11 @@ const photos = { sih } as const;
   .panel:nth-child(even) { transform: rotate(.5deg); }
   .panel.photo { width: 420px; }
   .panel.last { background: var(--accent); color: #121110; border-color: #121110; }
+  /* special episode: inverted ink panel, like an anime 'SP' between arcs */
+  .panel.special { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .special .ep { -webkit-text-stroke-color: var(--bg); }
+  .special .jp, .special .line { color: var(--bg); }
+  .special .shot { filter: drop-shadow(4px 4px 0 var(--accent)); }
   .ep { font: 400 3.4rem/.9 var(--display); color: transparent; -webkit-text-stroke: 1.5px var(--accent); }
   .last .ep { -webkit-text-stroke-color: #121110; }
   .jp {
