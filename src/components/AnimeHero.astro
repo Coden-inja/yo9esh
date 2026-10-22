@@ -7,14 +7,33 @@ import { person } from '../data/profile';
 
 const TEXT = 'yogesh builds products end to end and never gets bored of building';
 const WPM = 120; // Yogesh's own Monkeytype speed
----
-<section class="ahero" id="top">
-  <div class="slab" aria-hidden="true"></div>
-  <p class="ghost" aria-hidden="true">YOGESH</p>
-  <Image src={figure} alt="Yogesh, drawn in manga screentone" widths={[420, 820]} sizes="(max-width: 820px) 46vw, 30vw" class="fig" loading="eager" />
-  <p class="vkana" aria-hidden="true">ヨゲシュ・クマール</p>
 
-  <div class="copy">
+// faint speed lines radiating from the figure's head (far background layer)
+const N = 44;
+const rays = Array.from({ length: N }, (_, i) => {
+  const a = (i / N) * Math.PI * 2, w = (Math.PI * 2) / N / 5;
+  const pt = (ang: number, r: number) => `${(780 + Math.cos(ang) * r).toFixed(1)},${(260 + Math.sin(ang) * r).toFixed(1)}`;
+  return `M${pt(a - w, 120)}L${pt(a, 1300)}L${pt(a + w, 120)}Z`;
+}).join('');
+---
+<!--
+  Depth layers, far → near (Firewatch-style). data-speed is how fast a layer moves with the
+  page as you scroll out (1 = with the page, <1 = lags behind/far, >1 = rushes past/near);
+  data-mouse is how many px it drifts with the pointer. Motion.astro drives both.
+-->
+<section class="ahero" id="top">
+  <div class="layer l-rays" data-speed="0.25" data-mouse="4" aria-hidden="true">
+    <svg class="rays" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><path d={rays} /></svg>
+  </div>
+  <div class="layer l-ghost" data-speed="0.4" data-mouse="8" aria-hidden="true"><p class="ghost">YOGESH</p></div>
+  <div class="layer l-slab" data-speed="0.6" data-mouse="12" aria-hidden="true"><div class="slab"></div></div>
+  <div class="layer l-kana" data-speed="0.75" data-mouse="16" aria-hidden="true"><p class="vkana">ヨゲシュ・クマール</p></div>
+  <div class="layer l-fig" data-speed="0.9" data-mouse="24">
+    <Image src={figure} alt="Yogesh, drawn in manga screentone" widths={[420, 820]} sizes="(max-width: 820px) 46vw, 30vw" class="fig" loading="eager" />
+  </div>
+  <div class="layer l-fore" data-speed="1.6" data-mouse="0" aria-hidden="true"><div class="fore"></div></div>
+
+  <div class="copy" data-copy>
     <p class="ep mono">EP.00 — PILOT</p>
     <h1 class="name"><span>YOGESH</span> <span class="red">KUMAR</span></h1>
     <p class="tag">{person.role} who designs how the pieces connect.</p>
@@ -125,9 +144,20 @@ const WPM = 120; // Yogesh's own Monkeytype speed
     display: flex; align-items: center;
   }
 
+  .layer { position: absolute; inset: 0; pointer-events: none; will-change: transform; }
+  .l-rays { z-index: 0; } .l-ghost { z-index: 1; } .l-slab { z-index: 2; }
+  .l-kana { z-index: 3; } .l-fig { z-index: 4; } .l-fore { z-index: 6; }
+  .rays { position: absolute; inset: -10%; width: 120%; height: 120%; fill: var(--ink); opacity: .05; }
+  /* near foreground: the page's own paper rising over the scene as you scroll out */
+  .fore {
+    position: absolute; left: -5%; right: -5%; top: 100%; height: 60%;
+    background: var(--bg); clip-path: polygon(0 18%, 100% 0, 100% 100%, 0 100%);
+    border-top: 0; transform: translateY(-4vh);
+  }
+
   /* red diagonal slab with speed lines */
   .slab {
-    position: absolute; inset: 0 0 0 auto; width: 54%; z-index: -2;
+    position: absolute; inset: 0 0 0 auto; width: 54%;
     background:
       repeating-linear-gradient(115deg, transparent 0 22px, rgba(0,0,0,.07) 22px 24px),
       var(--accent);
@@ -140,22 +170,22 @@ const WPM = 120; // Yogesh's own Monkeytype speed
 
   /* giant outlined name behind the figure */
   .ghost {
-    position: absolute; z-index: -1; left: 50%; bottom: -0.16em; transform: translateX(-50%);
+    position: absolute; left: 50%; bottom: -0.16em; transform: translateX(-50%);
     margin: 0; font: 400 34vw/0.8 var(--display); letter-spacing: -0.01em; white-space: nowrap;
     color: transparent; -webkit-text-stroke: 2px var(--ink); opacity: .9; user-select: none;
   }
   .fig {
-    position: absolute; z-index: 1; bottom: 0; right: 13%;
+    position: absolute; bottom: 0; right: 13%;
     height: 92%; width: auto; filter: drop-shadow(10px 0 0 var(--ink));
   }
   .vkana {
-    position: absolute; z-index: 2; right: 2.6%; top: 16%; margin: 0;
+    position: absolute; right: 2.6%; top: 16%; margin: 0;
     writing-mode: vertical-rl; font: 900 clamp(1.4rem, 2.4vw, 2.3rem)/1 var(--jp); letter-spacing: .12em;
     color: var(--bg); text-shadow: 3px 3px 0 var(--ink);
   }
 
   .copy {
-    position: relative; z-index: 3; width: min(560px, 48%);
+    position: relative; z-index: 5; width: min(560px, 48%);
     margin-left: max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
     padding: 110px 0 60px;
   }

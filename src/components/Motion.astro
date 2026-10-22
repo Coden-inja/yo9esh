@@ -28,15 +28,36 @@
     new MutationObserver(syncOp).observe(root, { attributes: true, attributeFilter: ['class'] });
     syncOp();
 
-    // ---- 1. hero scroll-out: the name splits, the figure pushes in, the slab tilts ----
-    const out = gsap.timeline({ scrollTrigger: { trigger: '.ahero', start: 'top top', end: 'bottom top', scrub: 0.6 } });
-    out.to('.ahero .name span:first-child', { xPercent: -45, ease: 'none' }, 0)
-      .to('.ahero .name span:last-child', { xPercent: 45, ease: 'none' }, 0)
-      .to('.ahero .fig', { yPercent: 8, scale: 1.12, ease: 'none' }, 0)
-      .to('.ahero .slab', { rotate: -4, xPercent: 6, ease: 'none' }, 0)
-      .to('.ahero .vkana', { yPercent: -60, ease: 'none' }, 0)
-      .fromTo('.ahero .ghost', { xPercent: -50 }, { xPercent: -62, ease: 'none' }, 0)
-      .to('.ahero .copy > :not(.name)', { opacity: 0, y: -40, stagger: 0.05, ease: 'none' }, 0);
+    // ---- 1. hero depth layers (Firewatch-style) ----
+    // While the hero scrolls out, each layer is offset by (1 - speed) × distance: far layers
+    // (speed < 1) lag behind, the foreground (speed > 1) rushes up and covers the scene.
+    const hero = document.querySelector<HTMLElement>('.ahero');
+    if (hero) {
+      const layers = $$('.ahero .layer');
+      const copy = hero.querySelector<HTMLElement>('[data-copy]');
+      const st = { trigger: hero, start: 'top top', end: 'bottom top', scrub: true };
+      layers.forEach((l) => {
+        const speed = Number(l.dataset.speed ?? 1);
+        gsap.fromTo(l, { y: 0 }, { y: () => (1 - speed) * hero.offsetHeight, ease: 'none', scrollTrigger: st });
+      });
+      if (copy) gsap.to(copy, { y: () => 0.15 * hero.offsetHeight, opacity: 0.2, ease: 'none', scrollTrigger: st });
+
+      // pointer drift: near layers move more than far ones (desktop with a mouse only)
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        // x and yPercent are separate GSAP channels from the scroll tween's y, so they compose
+        const movers = layers.filter((l) => Number(l.dataset.mouse) > 0).map((l) => ({
+          px: Number(l.dataset.mouse),
+          x: gsap.quickTo(l, 'x', { duration: 0.9, ease: 'power3.out' }),
+          yp: gsap.quickTo(l, 'yPercent', { duration: 0.9, ease: 'power3.out' }),
+        }));
+        hero.addEventListener('pointermove', (e) => {
+          const r = hero.getBoundingClientRect();
+          const nx = (e.clientX - r.left) / r.width - 0.5, ny = (e.clientY - r.top) / r.height - 0.5;
+          movers.forEach((m) => { m.x(-nx * m.px * 2); m.yp((-ny * m.px * 100) / r.height); });
+        });
+        hero.addEventListener('pointerleave', () => movers.forEach((m) => { m.x(0); m.yp(0); }));
+      }
+    }
 
     // ---- 2. episode title cards: letters slam up, kanji drifts at its own speed ----
     $$('[data-ept]').forEach((el) => {
