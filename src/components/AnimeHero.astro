@@ -1,0 +1,264 @@
+---
+// Poster hero: screentone figure on a red slab, giant outlined name behind it,
+// and a Monkeytype-style typing test that is the main interaction.
+import { Image } from 'astro:assets';
+import figure from '../assets/hero/yogesh-tone.png';
+import { person } from '../data/profile';
+
+const TEXT = 'yogesh builds products end to end and never gets bored of building';
+const WPM = 120; // Yogesh's own Monkeytype speed
+---
+<section class="ahero" id="top">
+  <div class="slab" aria-hidden="true"></div>
+  <p class="ghost" aria-hidden="true">YOGESH</p>
+  <Image src={figure} alt="Yogesh, drawn in manga screentone" widths={[420, 820]} sizes="(max-width: 820px) 46vw, 30vw" class="fig" loading="eager" />
+  <p class="vkana" aria-hidden="true">ヨゲシュ・クマール</p>
+
+  <div class="copy">
+    <p class="ep mono">EP.00 — PILOT</p>
+    <h1 class="name"><span>YOGESH</span> <span class="red">KUMAR</span></h1>
+    <p class="tag">{person.role} who designs how the pieces connect.</p>
+
+    <div class="type" data-text={TEXT} data-wpm={WPM} tabindex="0" role="group" aria-label={`Typing test. Type: ${TEXT}`}>
+      <div class="words" aria-hidden="true">
+        {[...TEXT].map((c) => <span class:list={['ch', { sp: c === ' ' }]}>{c === ' ' ? ' ' : c}</span>)}
+      </div>
+      <input class="sink" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Type here" />
+      <p class="stats mono" aria-live="polite">
+        <span class="state">type to start</span>
+        <span>wpm <b class="wpm">0</b></span>
+        <span>acc <b class="acc">100</b>%</span>
+        <span class="me">yogesh · {WPM}</span>
+      </p>
+    </div>
+
+    <p class="keys mono">
+      <span><kbd data-key="1">1</kbd> work</span>
+      <span><kbd data-key="2">2</kbd> notes</span>
+      <span><kbd data-key="3">3</kbd> about</span>
+      <span><kbd data-key="0">0</kbd> sound <b class="snd">on</b></span>
+      <span><kbd data-key="Escape">esc</kbd> retry</span>
+    </p>
+  </div>
+</section>
+
+<script>
+  const box = document.querySelector<HTMLElement>('.ahero .type')!;
+  const hero = document.querySelector<HTMLElement>('.ahero')!;
+  const chars = [...box.querySelectorAll<HTMLElement>('.ch')];
+  const text = box.dataset.text!;
+  const target = Number(box.dataset.wpm);
+  const $ = (s: string) => box.querySelector<HTMLElement>(s)!;
+  const sink = box.querySelector<HTMLInputElement>('.sink')!;
+  const sndLabel = document.querySelector<HTMLElement>('.ahero .snd')!;
+
+  // ---- mechanical key click, synthesized (no audio files) ----
+  let sound = true;
+  try { sound = localStorage.getItem('sound') !== 'off'; } catch {}
+  sndLabel.textContent = sound ? 'on' : 'off';
+  let ctx: AudioContext | null = null;
+  let noise: AudioBuffer | null = null;
+  function click(heavy = false) {
+    if (!sound) return;
+    ctx ??= new AudioContext();
+    if (!noise) {
+      noise = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    }
+    const t = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = noise;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600 + Math.random() * 900; bp.Q.value = 1.4;
+    const g = ctx.createGain(); g.gain.setValueAtTime(heavy ? 0.5 : 0.32, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    src.connect(bp).connect(g).connect(ctx.destination); src.start(t);
+    // the low "thock" of the key bottoming out
+    const o = ctx.createOscillator(); o.frequency.setValueAtTime(heavy ? 120 : 160, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.05);
+    const og = ctx.createGain(); og.gain.setValueAtTime(heavy ? 0.22 : 0.12, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    o.connect(og).connect(ctx.destination); o.start(t); o.stop(t + 0.07);
+  }
+
+  // ---- typing test ----
+  let idx = 0, correct = 0, typed = 0, start = 0, done = false;
+  const marks: boolean[] = [];
+  function render() {
+    chars.forEach((c, i) => {
+      c.classList.toggle('ok', i < idx && marks[i]);
+      c.classList.toggle('bad', i < idx && !marks[i]);
+      c.classList.toggle('cur', i === idx && !done);
+    });
+    const mins = start ? (performance.now() - start) / 60000 : 0;
+    const wpm = mins > 0 ? Math.round(correct / 5 / mins) : 0;
+    $('.wpm').textContent = String(wpm);
+    $('.acc').textContent = String(typed ? Math.round((correct / typed) * 100) : 100);
+    if (done) {
+      $('.state').textContent = wpm >= target ? `you beat me. respect.` : `done — ${target - wpm} wpm behind me`;
+      box.classList.add('finished');
+    } else $('.state').textContent = start ? 'typing…' : 'type to start';
+  }
+  function reset() {
+    idx = correct = typed = start = 0; done = false; marks.length = 0;
+    box.classList.remove('finished'); render();
+  }
+  function type(k: string) {
+    if (done) return;
+    if (k === 'Backspace') {
+      if (idx > 0) { idx--; if (marks[idx]) correct--; }
+      render(); return;
+    }
+    if (!start) start = performance.now();
+    const ok = k.toLowerCase() === text[idx];
+    marks[idx] = ok; typed++; if (ok) correct++;
+    idx++;
+    if (idx >= text.length) done = true;
+    render();
+  }
+
+  // only capture typing while the hero is on screen, so space still scrolls elsewhere
+  let heroVisible = true;
+  new IntersectionObserver(([e]) => { heroVisible = e.intersectionRatio > 0.35; }, { threshold: [0, 0.35, 1] }).observe(hero);
+
+  const jump: Record<string, string> = { '1': '#work', '2': '#notes', '3': '#about' };
+  function press(key: string, down: boolean) {
+    document.querySelector(`.ahero kbd[data-key="${key}"]`)?.classList.toggle('down', down);
+  }
+
+  addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || document.documentElement.classList.contains('op')) return;
+    const el = e.target as HTMLElement;
+    if (el !== sink && el.closest('input, textarea, [contenteditable]')) return;
+    press(e.key, true);
+    if (jump[e.key]) { click(true); document.querySelector(jump[e.key])?.scrollIntoView({ behavior: 'smooth' }); return; }
+    if (e.key === '0') {
+      sound = !sound; sndLabel.textContent = sound ? 'on' : 'off';
+      try { localStorage.setItem('sound', sound ? 'on' : 'off'); } catch {}
+      click(true); return;
+    }
+    if (e.key === 'Escape') { click(true); reset(); return; }
+    if (!heroVisible || el === sink) return; // the sink handles its own input (mobile)
+    if (e.key === 'Backspace' || /^[a-z ]$/i.test(e.key)) {
+      e.preventDefault(); click(e.key === ' '); type(e.key);
+    }
+  });
+  addEventListener('keyup', (e) => press(e.key, false));
+
+  // phones: tap the box to bring up the keyboard; feed characters from a hidden input
+  box.addEventListener('pointerdown', () => sink.focus());
+  sink.addEventListener('beforeinput', (e) => {
+    e.preventDefault();
+    if (e.inputType === 'deleteContentBackward') { click(); type('Backspace'); return; }
+    for (const c of e.data ?? '') { click(c === ' '); type(c); }
+  });
+  render();
+</script>
+
+<style>
+  .ahero {
+    position: relative; overflow: hidden; isolation: isolate;
+    min-height: max(680px, 100svh); margin-top: -78px; /* run under the nav */
+    display: flex; align-items: center;
+  }
+
+  /* red diagonal slab with speed lines */
+  .slab {
+    position: absolute; inset: 0 0 0 auto; width: 54%; z-index: -2;
+    background:
+      repeating-linear-gradient(115deg, transparent 0 22px, rgba(0,0,0,.07) 22px 24px),
+      var(--accent);
+    clip-path: polygon(26% 0, 100% 0, 100% 100%, 0 100%);
+  }
+  /* giant outlined name behind the figure */
+  .ghost {
+    position: absolute; z-index: -1; left: 50%; bottom: -0.16em; transform: translateX(-50%);
+    margin: 0; font: 400 34vw/0.8 var(--display); letter-spacing: -0.01em; white-space: nowrap;
+    color: transparent; -webkit-text-stroke: 2px var(--ink); opacity: .9; user-select: none;
+  }
+  .fig {
+    position: absolute; z-index: 1; bottom: 0; right: 13%;
+    height: 92%; width: auto; filter: drop-shadow(10px 0 0 var(--ink));
+  }
+  .vkana {
+    position: absolute; z-index: 2; right: 2.6%; top: 16%; margin: 0;
+    writing-mode: vertical-rl; font: 900 clamp(1.4rem, 2.4vw, 2.3rem)/1 var(--jp); letter-spacing: .12em;
+    color: var(--bg); text-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .copy {
+    position: relative; z-index: 3; width: min(560px, 48%);
+    margin-left: max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
+    padding: 110px 0 60px;
+  }
+  .ep { margin: 0 0 12px; font-size: .75rem; letter-spacing: .3em; color: var(--accent-ink); }
+  .name { margin: 0; font: 400 clamp(4.2rem, 9.5vw, 8.6rem)/.88 var(--display); letter-spacing: .005em; color: var(--ink); }
+  .name span { display: block; }
+  .name .red { color: var(--accent); }
+  .tag { margin: 18px 0 30px; font-size: 1.12rem; color: var(--ink-2); max-width: 24em; }
+
+  .type {
+    position: relative; cursor: text; outline: none;
+    padding: 18px 20px 14px; background: var(--surface);
+    border: 2px solid var(--ink); border-radius: 4px; box-shadow: 7px 7px 0 var(--ink);
+    transition: box-shadow .15s, transform .15s;
+  }
+  .type:focus-visible, .type:focus-within { box-shadow: 7px 7px 0 var(--accent); }
+  .words { font: 500 1.22rem/1.65 var(--mono); color: var(--muted); letter-spacing: .01em; }
+  .ch { position: relative; transition: color .06s; }
+  .ch.ok { color: var(--ink); }
+  .ch.bad { color: var(--accent); text-decoration: underline 2px; text-underline-offset: 4px; }
+  .ch.sp.bad { background: var(--accent-soft); }
+  .ch.cur::before {
+    content: ''; position: absolute; left: -1px; top: .18em; bottom: .14em; width: 2px; background: var(--accent);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .finished .words { color: var(--ink); }
+  .sink { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; font-size: .72rem; color: var(--muted); }
+  .stats b { color: var(--ink); font-weight: 600; }
+  .stats .state { color: var(--accent-ink); }
+  .stats .me { margin-left: auto; }
+
+  /* paper backing so the outlined name behind doesn't cut through the legend */
+  .keys {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; width: max-content; max-width: 100%;
+    margin: 22px 0 0; padding: 8px 12px; border-radius: 6px;
+    background: var(--bg); font-size: .72rem; color: var(--ink-2);
+  }
+  .keys b { color: var(--ink); font-weight: 600; }
+  kbd {
+    display: inline-block; min-width: 1.9em; text-align: center; margin-right: 4px;
+    padding: 2px 6px 1px; font: 600 .72rem/1.4 var(--mono); color: var(--ink);
+    background: var(--surface); border: 1.5px solid var(--ink); border-bottom-width: 4px; border-radius: 5px;
+    transition: transform .05s, border-bottom-width .05s;
+  }
+  kbd.down { transform: translateY(2px); border-bottom-width: 2px; background: var(--accent-soft); }
+  @media (hover: none) { .keys { display: none; } }
+
+  /* entrance, after the cold open (or straight away when it's skipped) */
+  :global(html.ready) .slab { animation: slab-in .7s cubic-bezier(.7,0,.25,1) both; }
+  :global(html.ready) .fig { animation: rise .8s cubic-bezier(.2,.9,.2,1) .15s both; }
+  :global(html.ready) .ghost { animation: ghost-in 1s cubic-bezier(.2,.9,.2,1) .05s both; }
+  :global(html.ready) .copy > * { animation: rise .6s cubic-bezier(.2,.9,.2,1) both; }
+  :global(html.ready) .copy > :nth-child(2) { animation-delay: .08s; }
+  :global(html.ready) .copy > :nth-child(3) { animation-delay: .16s; }
+  :global(html.ready) .copy > :nth-child(4) { animation-delay: .24s; }
+  :global(html.ready) .copy > :nth-child(5) { animation-delay: .32s; }
+  @keyframes slab-in { from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(28px); } }
+  @keyframes ghost-in { from { opacity: 0; letter-spacing: .12em; } }
+
+  /* phones/tablets: the figure is tall and narrow, so it stands beside the name on a
+     smaller slab, and the typing box overlaps its legs like a manga panel */
+  @media (max-width: 820px) {
+    .ahero { display: block; min-height: 0; padding-bottom: 28px; }
+    .slab { inset: 0 0 auto auto; width: 58%; height: min(78vh, 640px); clip-path: polygon(34% 0, 100% 0, 100% 100%, 0 82%); }
+    .fig { top: 84px; bottom: auto; right: 5%; height: min(56vh, 470px); filter: drop-shadow(6px 0 0 var(--ink)); }
+    .ghost, .vkana { display: none; }
+    .copy { width: auto; margin: 0 var(--gutter); padding: 96px 0 0; }
+    .copy > :not(.type) { max-width: calc(100% - min(38vw, 175px)); }
+    .name { font-size: clamp(3.4rem, 15vw, 6rem); }
+    .tag { font-size: 1rem; margin-bottom: max(24px, calc(min(56vh, 470px) - 300px)); }
+    .type { box-shadow: 5px 5px 0 var(--ink); }
+    .words { font-size: 1.02rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ch.cur::before { animation: none; } }
+</style>

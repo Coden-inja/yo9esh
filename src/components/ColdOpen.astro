@@ -1,0 +1,99 @@
+---
+// Anime-OP style title card (~2.8 s). Shown once per browser session, never with
+// prefers-reduced-motion; any key / click / tap skips it. Base.astro adds `html.op`
+// before first paint when it should play, so there is no flash either way.
+const RAYS = 56;
+const rays = Array.from({ length: RAYS }, (_, i) => {
+  const a = (i / RAYS) * Math.PI * 2;
+  const w = (Math.PI * 2) / RAYS / (i % 3 === 0 ? 2.2 : 4.5);
+  const p = (ang: number, r: number) => `${(500 + Math.cos(ang) * r).toFixed(1)},${(500 + Math.sin(ang) * r).toFixed(1)}`;
+  return `M${p(a - w, 90)} L${p(a, 760)} L${p(a + w, 90)} Z`;
+});
+---
+<div class="cold" aria-hidden="true">
+  <svg class="rays" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+    <path d={rays.join(' ')} />
+  </svg>
+  <p class="kana">ヨゲシュ</p>
+  <div class="flash"></div>
+  <div class="card">
+    <p class="ep mono">EP.00 — PILOT</p>
+    <h1><span class="t1">YOGESH</span><span class="t2">KUMAR</span></h1>
+    <p class="kana-sub">ヨゲシュ・クマール</p>
+  </div>
+  <p class="skip mono">press any key</p>
+</div>
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+    if (!root.classList.contains('op')) { root.classList.add('ready'); return; }
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      // the hero starts its entrance underneath while the card wipes away
+      root.classList.add('op-out', 'ready');
+      try { sessionStorage.setItem('op', '1'); } catch {}
+      setTimeout(() => root.classList.remove('op', 'op-out'), 560);
+      removeEventListener('keydown', finish); removeEventListener('pointerdown', finish);
+    };
+    setTimeout(finish, 2800);
+    addEventListener('keydown', finish);
+    addEventListener('pointerdown', finish);
+  })();
+</script>
+
+<style>
+  .cold { display: none; }
+  :global(html.op) .cold {
+    position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden;
+    background: #121110; color: #f3ece0;
+    clip-path: inset(0 0 0 0);
+  }
+  :global(html.op) { overflow: hidden; }
+  :global(html.op-out) .cold { clip-path: inset(0 0 100% 0); transition: clip-path .55s cubic-bezier(.7,0,.25,1); }
+
+  .rays { position: absolute; inset: -10%; width: 120%; height: 120%; fill: #e1261c; opacity: 0;
+    animation: rays-in .35s ease-out .05s forwards, spin 6s linear infinite; }
+  @keyframes rays-in { to { opacity: .9; } }
+  @keyframes spin { to { transform: rotate(12deg) scale(1.08); } }
+
+  .kana {
+    position: absolute; margin: 0; font: 900 clamp(5rem, 22vw, 18rem)/1 var(--jp); letter-spacing: -0.04em;
+    color: #f3ece0; opacity: 0; transform: scale(1.6);
+    animation: kana 0.85s cubic-bezier(.2,.9,.2,1) .15s forwards;
+  }
+  @keyframes kana {
+    0% { opacity: 0; transform: scale(1.6); }
+    25% { opacity: 1; transform: scale(1); }
+    80% { opacity: 1; transform: scale(.96); }
+    100% { opacity: 0; transform: scale(.9); }
+  }
+
+  .flash { position: absolute; inset: 0; background: #f3ece0; opacity: 0; animation: flash .22s linear 1s forwards; }
+  @keyframes flash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+
+  .card { position: relative; text-align: center; animation: shake .32s steps(2) 1.32s 1; }
+  h1 { margin: 0; font-family: var(--display); font-weight: 400; line-height: .86; letter-spacing: .01em; }
+  .t1 {
+    display: block; font-size: clamp(5rem, 21vw, 17rem); color: #f3ece0; opacity: 0; transform: scale(2.4);
+    animation: slam .2s cubic-bezier(.3,1.6,.5,1) 1.12s forwards;
+    text-shadow: 6px 6px 0 #e1261c;
+  }
+  .t2 {
+    display: block; font-size: clamp(2.6rem, 10vw, 8rem); color: #121110; background: #e1261c;
+    padding: 0 .25em; margin: .06em auto 0; width: max-content;
+    clip-path: inset(0 100% 0 0); animation: wipe .3s cubic-bezier(.7,0,.25,1) 1.45s forwards;
+  }
+  .ep { margin: 0 0 14px; font-size: .8rem; letter-spacing: .3em; color: #e1261c; opacity: 0; animation: up .3s ease-out 1.75s forwards; }
+  .kana-sub { margin: 14px 0 0; font: 900 1.1rem/1 var(--jp); letter-spacing: .35em; opacity: 0; animation: up .3s ease-out 1.9s forwards; }
+  .skip { position: absolute; bottom: 24px; right: 28px; margin: 0; font-size: .7rem; letter-spacing: .15em; opacity: .55; }
+
+  @keyframes slam { to { opacity: 1; transform: scale(1); } }
+  @keyframes wipe { to { clip-path: inset(0 0 0 0); } }
+  @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes shake {
+    0% { transform: translate(6px, -4px); } 50% { transform: translate(-5px, 4px); } 100% { transform: none; }
+  }
+</style>

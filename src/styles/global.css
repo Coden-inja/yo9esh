@@ -2,19 +2,24 @@
 @import '@fontsource/instrument-serif/400-italic.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource/anton';
+@import '@fontsource/noto-sans-jp/900.css';
 
 :root {
-  --bg: #faf7f0;
-  --surface: #ffffff;
-  --ink: #1c1915;
-  --ink-2: #4a443b;
-  --muted: #7a7266;
-  --line: #e6dfd1;
-  --accent: #e3a008;      /* marigold: fills, dots, rules */
-  --accent-ink: #8a5a00;  /* marigold dark enough for text */
-  --accent-soft: #fbefd0;
+  --bg: #f3ece0;          /* paper */
+  --surface: #fbf7ef;
+  --ink: #121110;
+  --ink-2: #3d3833;
+  --muted: #7a7064;
+  --line: #ddd2c0;
+  --accent: #e1261c;      /* anime red: fills, slabs, rules */
+  --accent-ink: #b81c13;  /* red dark enough for text */
+  --accent-soft: #f6d6cf;
+  --yellow: #ffc21a;
 
   --serif: 'Instrument Serif', Georgia, serif;
+  --display: 'Anton', 'Impact', 'Arial Narrow Bold', sans-serif;
+  --jp: 'Noto Sans JP', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', sans-serif;
   --sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', monospace;
 
@@ -26,28 +31,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #131210;
-    --surface: #1b1916;
-    --ink: #f1ece2;
-    --ink-2: #c9c1b4;
-    --muted: #918878;
-    --line: #2c2924;
-    --accent: #f0b429;
-    --accent-ink: #f5c451;
-    --accent-soft: #2b2312;
+    --bg: #121110;
+    --surface: #1a1816;
+    --ink: #f3ece0;
+    --ink-2: #cfc5b6;
+    --muted: #93897b;
+    --line: #2d2924;
+    --accent: #f0352a;
+    --accent-ink: #ff6a5e;
+    --accent-soft: #3a1512;
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
-  --bg: #131210;
-  --surface: #1b1916;
-  --ink: #f1ece2;
-  --ink-2: #c9c1b4;
-  --muted: #918878;
-  --line: #2c2924;
-  --accent: #f0b429;
-  --accent-ink: #f5c451;
-  --accent-soft: #2b2312;
+  --bg: #121110;
+  --surface: #1a1816;
+  --ink: #f3ece0;
+  --ink-2: #cfc5b6;
+  --muted: #93897b;
+  --line: #2d2924;
+  --accent: #f0352a;
+  --accent-ink: #ff6a5e;
+  --accent-soft: #3a1512;
   color-scheme: dark;
 }
 

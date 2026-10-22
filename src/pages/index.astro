@@ -2,7 +2,8 @@
 import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import Hero from '../components/Hero.astro';
+import AnimeHero from '../components/AnimeHero.astro';
+import ColdOpen from '../components/ColdOpen.astro';
 import SystemCard from '../components/SystemCard.astro';
 import { person, systems, builds, recognition, moments, toolbelt, learning } from '../data/profile';
 import { getStars } from '../lib/github';
@@ -20,7 +21,8 @@ const more = systems.filter((s) => !s.featured);
 const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.data.order);
 ---
 <Base>
-  <Hero />
+  <ColdOpen />
+  <AnimeHero />
 
   <section id="work" class="wrap">
     <div class="section-head">

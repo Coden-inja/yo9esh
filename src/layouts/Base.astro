@@ -74,6 +74,11 @@ const personLd = {
         const t = localStorage.getItem('theme');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
       } catch {}
+      // cold open (ColdOpen.astro): home page only, once per session, never with reduced motion
+      try {
+        if (location.pathname === '/' && !sessionStorage.getItem('op')
+          && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('op');
+      } catch {}
     </script>
   </head>
   <body>
@@ -113,6 +118,7 @@ const personLd = {
 
 <style>
   .nav {
+    position: relative; z-index: 10; /* the home hero runs underneath it */
     display: flex; align-items: center; justify-content: space-between;
     padding-top: 22px; padding-bottom: 22px; gap: 16px;
   }
