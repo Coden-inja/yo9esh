@@ -2,7 +2,7 @@
 // Contact, as the anime "to be continued" end card + next-episode preview, with the
 // final frame anime endings freeze on: Yogesh on stage, mic in hand.
 import { Image } from 'astro:assets';
-import mic from '../assets/hero/mic2-tone.png';
+import face from '../assets/hero/bandana-tone.png';
 import { person } from '../data/profile';
 ---
 <div class="tbc">
@@ -20,7 +20,7 @@ import { person } from '../data/profile';
     </ul>
   </div>
   <figure class="face">
-    <Image src={mic} alt="Yogesh singing on stage, drawn in manga screentone" width={320} height={409} densities={[1, 2]} />
+    <Image src={face} alt="Yogesh in a bandana, smiling, drawn in manga screentone" width={320} height={444} densities={[1, 2]} />
     <figcaption lang="ja">つづく</figcaption>
   </figure>
 </div>
