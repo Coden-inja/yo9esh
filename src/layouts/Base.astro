@@ -74,10 +74,14 @@ const personLd = {
         const t = localStorage.getItem('theme');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
       } catch {}
-      // cold open (ColdOpen.astro): home page only, once per session, never with reduced motion
+      // title screen (ColdOpen.astro): on a fresh visit or a reload of the home page, but not
+      // when arriving from another page of this site or via back/forward. Its "press any key"
+      // is also the gesture browsers require before they allow sound.
       try {
-        if (location.pathname === '/' && !sessionStorage.getItem('op')
-          && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('op');
+        const nav = performance.getEntriesByType('navigation')[0];
+        const internal = !!document.referrer && new URL(document.referrer).origin === location.origin;
+        const fresh = nav ? nav.type === 'reload' || (nav.type === 'navigate' && !internal) : !internal;
+        if (location.pathname === '/' && fresh) document.documentElement.classList.add('op');
       } catch {}
     </script>
   </head>
@@ -100,7 +104,7 @@ const personLd = {
     {!bare && (
       <footer class="wrap foot">
         <span>© {new Date().getFullYear()} {person.name}</span>
-        <span class="mono">Built with Astro · no trackers · <a href="https://github.com/Coden-inja/yo9esh">source</a></span>
+        <span lang="ja">ヨゲシュ・クマール</span>
       </footer>
     )}
     <script is:inline>

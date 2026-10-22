@@ -16,7 +16,7 @@ import { sideQuests } from '../data/profile';
 </ul>
 
 <script>
-  import { click } from '../lib/audio';
+  import { click, keyDown } from '../lib/audio';
   const row = document.querySelector<HTMLElement>('[data-sidequests]')!;
   let visible = false;
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.5 }).observe(row);
@@ -25,7 +25,7 @@ import { sideQuests } from '../data/profile';
     if ((e.target as HTMLElement).closest('input, textarea, [contenteditable]')) return;
     const cap = row.querySelector<HTMLAnchorElement>(`[data-quest="${e.key.toLowerCase()}"]`);
     if (!cap) return;
-    cap.classList.add('down'); click(true);
+    cap.classList.add('down'); keyDown(e, true);
     setTimeout(() => cap.classList.remove('down'), 160);
     window.open(cap.href, '_blank', 'noopener');
   });

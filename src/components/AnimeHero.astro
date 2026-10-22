@@ -43,7 +43,7 @@ const WPM = 120; // Yogesh's own Monkeytype speed
 </section>
 
 <script>
-  import { click, clicksOn } from '../lib/audio';
+  import { click, clicksOn, keyDown } from '../lib/audio';
 
   const box = document.querySelector<HTMLElement>('.ahero .type')!;
   const hero = document.querySelector<HTMLElement>('.ahero')!;
@@ -102,9 +102,9 @@ const WPM = 120; // Yogesh's own Monkeytype speed
     if (document.documentElement.classList.contains('keymap-open')) return;
     const el = e.target as HTMLElement;
     if (!heroVisible || el === sink || el.closest('input, textarea, [contenteditable]')) return;
-    if (e.key === 'Escape') { click(true); reset(); return; }
+    if (e.key === 'Escape') { keyDown(e, true); reset(); return; }
     if (e.key === 'Backspace' || /^[a-z ]$/i.test(e.key)) {
-      e.preventDefault(); click(e.key === ' '); type(e.key);
+      e.preventDefault(); keyDown(e); type(e.key);
     }
   });
 

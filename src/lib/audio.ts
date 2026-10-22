@@ -4,9 +4,17 @@ let ctx: AudioContext | null = null;
 let noise: AudioBuffer | null = null;
 
 export function audio(): AudioContext {
-  ctx ??= new AudioContext();
+  // 'interactive' asks the OS for the smallest output buffer, so a key sound lands with the key
+  ctx ??= new AudioContext({ latencyHint: 'interactive' });
   if (ctx.state === 'suspended') void ctx.resume();
   return ctx;
+}
+
+/** Resolves once the audio clock is actually running (it starts only after a user gesture). */
+export async function ready(): Promise<AudioContext> {
+  const c = audio();
+  if (c.state !== 'running') await c.resume();
+  return c;
 }
 
 /** 1 s of white noise, shared by clicks, drums and vinyl texture. */
@@ -30,19 +38,80 @@ export function setClicks(on: boolean) {
   dispatchEvent(new CustomEvent('clicks:change', { detail: on }));
 }
 
-/** Mechanical key click: a filtered noise "tick" plus a low "thock" as the key bottoms out. */
+/** Rising air "whoosh" (filtered noise sweep), for the title-screen entrance. */
+export function whoosh(when = 0, dur = 0.7) {
+  const c = audio();
+  const t = c.currentTime + when;
+  const src = c.createBufferSource(); src.buffer = noiseBuffer(); src.loop = true;
+  const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+  f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(5200, t + dur);
+  const g = c.createGain(); g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.35, t + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f).connect(g).connect(c.destination); src.start(t); src.stop(t + dur + 0.05);
+}
+
+/** Anime "impact frame" hit: a sub boom plus a noise crack. */
+export function impact(when = 0, power = 1) {
+  const c = audio();
+  const t = c.currentTime + when;
+  const o = c.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.45);
+  const og = c.createGain(); og.gain.setValueAtTime(0.9 * power, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+  o.connect(og).connect(c.destination); o.start(t); o.stop(t + 0.65);
+  const s = c.createBufferSource(); s.buffer = noiseBuffer();
+  const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2400;
+  const g = c.createGain(); g.gain.setValueAtTime(0.5 * power, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  s.connect(f).connect(g).connect(c.destination); s.start(t, 0.2, 0.3);
+}
+
+// A mechanical key makes two sounds: the clack as it bottoms out (keydown) and a lighter
+// click as it springs back (keyup). Each part is a short filtered-noise transient plus a
+// tiny pitched body; small random variation keeps fast typing from sounding robotic.
+function keySound(t: number, { freq, q, vol, body, bodyVol, len }: { freq: number; q: number; vol: number; body: number; bodyVol: number; len: number }) {
+  const c = audio();
+  const src = c.createBufferSource(); src.buffer = noiseBuffer();
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq * (0.9 + Math.random() * 0.2); bp.Q.value = q;
+  const g = c.createGain();
+  g.gain.setValueAtTime(vol * (0.85 + Math.random() * 0.3), t);
+  g.gain.exponentialRampToValueAtTime(0.0008, t + len);
+  src.connect(bp).connect(g).connect(c.destination);
+  src.start(t, Math.random() * 0.9, len + 0.02);
+  if (bodyVol > 0) {
+    const o = c.createOscillator(); o.type = 'triangle';
+    o.frequency.setValueAtTime(body * (0.95 + Math.random() * 0.1), t); o.frequency.exponentialRampToValueAtTime(body * 0.55, t + len);
+    const og = c.createGain(); og.gain.setValueAtTime(bodyVol, t); og.gain.exponentialRampToValueAtTime(0.0008, t + len * 1.2);
+    o.connect(og).connect(c.destination); o.start(t); o.stop(t + len * 1.3);
+  }
+}
+
+/** Keydown: the clack. `heavy` = space bar / modifier keys, deeper and longer with a little rattle. */
 export function click(heavy = false) {
   if (!clicks) return;
-  const c = audio();
-  const t = c.currentTime;
-  const src = c.createBufferSource();
-  src.buffer = noiseBuffer();
-  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600 + Math.random() * 900; bp.Q.value = 1.4;
-  const g = c.createGain(); g.gain.setValueAtTime(heavy ? 0.5 : 0.32, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-  src.connect(bp).connect(g).connect(c.destination);
-  src.start(t, Math.random() * 0.9, 0.06);
-  const o = c.createOscillator();
-  o.frequency.setValueAtTime(heavy ? 120 : 160, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.05);
-  const og = c.createGain(); og.gain.setValueAtTime(heavy ? 0.22 : 0.12, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  o.connect(og).connect(c.destination); o.start(t); o.stop(t + 0.07);
+  const t = audio().currentTime;
+  if (heavy) {
+    keySound(t, { freq: 1700, q: 1.1, vol: 0.55, body: 210, bodyVol: 0.3, len: 0.075 });
+    keySound(t + 0.012, { freq: 3600, q: 3, vol: 0.12, body: 0, bodyVol: 0, len: 0.03 }); // stabilizer rattle
+  } else {
+    keySound(t, { freq: 3300, q: 1.6, vol: 0.42, body: 330, bodyVol: 0.16, len: 0.045 });
+  }
+}
+
+/** Keyup: the softer, higher click of the switch returning. */
+export function release(heavy = false) {
+  if (!clicks) return;
+  const t = audio().currentTime;
+  keySound(t, { freq: heavy ? 2600 : 4300, q: 2.2, vol: heavy ? 0.2 : 0.14, body: heavy ? 260 : 520, bodyVol: 0.05, len: 0.03 });
+}
+
+// Keys that played a press sound, so their keyup can play the matching release.
+const held = new Set<string>();
+/** Press sound tied to a physical key (ignores auto-repeat while the key is held). */
+export function keyDown(e: KeyboardEvent, heavy = e.key === ' ') {
+  if (e.repeat) return;
+  held.add(e.code || e.key);
+  click(heavy);
+}
+/** Release sound, only for keys that played a press. */
+export function keyUp(e: KeyboardEvent) {
+  if (held.delete(e.code || e.key)) release(e.key === ' ');
 }

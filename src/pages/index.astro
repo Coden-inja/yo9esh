@@ -41,7 +41,7 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
   </section>
 
   <section id="story" data-jump="2">
-    <div class="wrap"><EpTitle ep="02" title="Origin Story" jp="物語" sub="six episodes · keep scrolling →" /></div>
+    <div class="wrap"><EpTitle ep="02" title="Origin Story" jp="物語" sub="seven episodes · keep scrolling →" compact /></div>
     <Episodes />
   </section>
 
@@ -76,6 +76,14 @@ const notes = (await getCollection('notes')).sort((a, b) => a.data.order - b.dat
 <style>
   section { scroll-margin-top: 20px; }
   #story { overflow: hidden; }
+  /* desktop with motion: the story is one full screen, pinned while the strip scrolls sideways */
+  @media (min-width: 900px) {
+    :global(html.motion) #story {
+      height: 100svh; box-sizing: border-box; padding: 76px 0 26px;
+      display: flex; flex-direction: column; justify-content: center;
+      --strip-h: calc(100svh - 76px - 26px - var(--title-h, 230px) - 28px);
+    }
+  }
 
   .more { margin-top: 8px; }
   .more summary {

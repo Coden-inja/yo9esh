@@ -1,11 +1,11 @@
 ---
 // Section opener styled as an anime episode title card. Letters are pre-split so
 // Motion.astro can slam them in on scroll; without JS it simply renders.
-interface Props { ep: string; title: string; jp: string; sub?: string }
-const { ep, title, jp, sub } = Astro.props;
+interface Props { ep: string; title: string; jp: string; sub?: string; compact?: boolean }
+const { ep, title, jp, sub, compact = false } = Astro.props;
 const words = title.toUpperCase().split(' ');
 ---
-<header class="ept" data-ept>
+<header class:list={['ept', { compact }]} data-ept>
   <span class="num" aria-hidden="true">EP.{ep}</span>
   <h2 aria-label={title}>
     {words.map((w) => (
@@ -36,6 +36,13 @@ const words = title.toUpperCase().split(' ');
     font: 900 clamp(3rem, 9vw, 8.5rem)/1 var(--jp); letter-spacing: -.04em;
     color: var(--accent); pointer-events: none;
   }
+  /* compact: used where the title shares one screen with content (pinned story) */
+  .compact { padding: 0; margin-bottom: 22px; }
+  .compact .num { font-size: clamp(2.2rem, 4.5vw, 3.6rem); }
+  .compact h2 { font-size: clamp(2.6rem, 6vw, 5rem); }
+  .compact .jp { font-size: clamp(2.6rem, 6vw, 5.4rem); }
+  .compact .bar { margin-top: 12px; height: 8px; }
+  .compact .sub { margin-top: 10px; }
   .bar { display: block; height: 10px; width: min(420px, 60%); margin-top: 18px; background: var(--accent); transform-origin: left; }
   .sub { margin: 14px 0 0; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
   @media (max-width: 720px) {

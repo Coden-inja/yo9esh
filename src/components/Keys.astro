@@ -18,7 +18,7 @@
 </div>
 
 <script>
-  import { click, clicksOn, setClicks } from '../lib/audio';
+  import { clicksOn, setClicks, keyDown, keyUp } from '../lib/audio';
   import { toggle } from '../lib/lofi';
 
   const map = document.querySelector<HTMLElement>('.keymap')!;
@@ -34,18 +34,18 @@
     if ((e.target as HTMLElement).closest('input, textarea, [contenteditable]')) return;
     press(e.key.length === 1 ? e.key.toLowerCase() : e.key, true);
 
-    if (e.key === '?') { click(true); open(map.hidden); return; }
+    if (e.key === '?') { keyDown(e, true); open(map.hidden); return; }
     if (e.key === 'Escape' && !map.hidden) { open(false); return; }
-    if (e.key === '9') { click(true); toggle(); return; }
-    if (e.key === '0') { setClicks(!clicksOn()); click(true); return; }
+    if (e.key === '9') { keyDown(e, true); toggle(); return; }
+    if (e.key === '0') { setClicks(!clicksOn()); keyDown(e, true); return; }
     const target = document.querySelector<HTMLElement>(`[data-jump="${e.key}"]`);
     if (target) {
-      click(true);
+      keyDown(e, true);
       const lenis = (window as unknown as { __lenis?: { scrollTo: (el: HTMLElement) => void } }).__lenis;
       if (lenis) lenis.scrollTo(target); else target.scrollIntoView({ behavior: 'smooth' });
     }
   });
-  addEventListener('keyup', (e) => press(e.key.length === 1 ? e.key.toLowerCase() : e.key, false));
+  addEventListener('keyup', (e) => { press(e.key.length === 1 ? e.key.toLowerCase() : e.key, false); keyUp(e); });
 </script>
 
 <style>
