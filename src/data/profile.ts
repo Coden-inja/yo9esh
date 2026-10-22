@@ -422,3 +422,31 @@ export const skillsForResume = [
   { k: 'Frontend', v: 'React, Next.js, Three.js' },
   { k: 'AI & compute', v: 'PyTorch, TensorFlow, CUDA, RunPod, RAG, MCP, LLM agents' },
 ];
+
+// ---- anime redesign ----
+
+// "Origin story" as anime episodes. Yogesh's own account (told 2026-10-22); dates from his
+// resumes and posts. Keep each line short: these are title cards, not paragraphs.
+export const episodes = [
+  { ep: '01', title: 'Lockdown Boredom', jp: '退屈', when: 'Class 9', line: 'Started coding because the lockdown was boring. Quit after two months: too hard, no reason to keep going.' },
+  { ep: '02', title: 'The Smartwatch', jp: '腕時計', when: 'Jan 2022', line: '78th of 400 at a GeeksforGeeks coding tournament. Won a smartwatch. Kept winning school contests, still built nothing.' },
+  { ep: '03', title: 'The Finale', jp: '決勝', when: 'Dec 2024', line: 'First semester. Some luck, mostly groundwork: our team made the Smart India Hackathon Grand Finale. We lost, and I found a purpose: to win, and to build.', photo: 'sih' },
+  { ep: '04', title: 'First Win', jp: '初勝利', when: 'Jul 2025', line: '1st prize at Ideatex with Cursor for n8n. Then Project Admin for AlchEmaiLyst in GSSoC.' },
+  { ep: '05', title: 'Ship Before the Interview', jp: '先に作る', when: 'Dec 2025', line: 'Got an SDE internship at SystemStar by building a mock before the interview.', link: { label: 'Read it', href: '/notes/ship-before-the-interview' } },
+  { ep: '06', title: 'For the Love of Building', jp: '作る喜び', when: 'Now', line: '20+ hackathons later I stopped caring about winning. Building is the one thing I never get bored of.' },
+];
+
+// Interactive projects only, each bound to a key on the keyboard row.
+export const sideQuests = [
+  { key: 'q', name: '3dWebImg', what: 'Turn any photo into a 360° view', href: 'https://3dwebimg.vercel.app' },
+  { key: 'w', name: 'Moot Spiral', what: 'Photos + a song → a Fibonacci-spiral video', href: 'https://fibo-anim.vercel.app' },
+  { key: 'e', name: 'Fullstack Odyssey', what: 'Watch the event loop, SQL joins and Git move', href: 'https://fullstack-odyssey.vercel.app' },
+  { key: 'r', name: 'ClimaVisor', what: 'Spin a 3D globe of climate data', href: 'https://clima-visor.vercel.app' },
+  { key: 't', name: '3D Art Gallery', what: 'Walk a gallery in first person (WASD)', href: 'https://coden-inja.github.io/3D-art-gallery/' },
+];
+
+// Scrolling credits band under the hero.
+export const achievements = [
+  'SIH ’24 Grand Finalist', 'Ideatex 1st Prize', 'Calcutta Hacks Track Winner', 'TCS Hackathon Winner',
+  'e-Summit ’25 · 2× Podium', 'GSSoC ’25 Project Admin', 'AlchEmaiLyst #1 · 42★', '20+ Hackathons', '120 WPM',
+];

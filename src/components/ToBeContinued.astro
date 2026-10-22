@@ -1,0 +1,35 @@
+---
+// Contact, as the anime "to be continued" end card + next-episode preview.
+import { person } from '../data/profile';
+---
+<div class="tbc">
+  <p class="preview mono" lang="ja">次回予告 · next episode</p>
+  <div class="arrow" data-tbc><span>TO BE CONTINUED</span></div>
+  <p class="line">Next episode stars you and me, building something. Say hi.</p>
+  <a class="mail" href={`mailto:${person.email}`}>{person.email}</a>
+  <ul class="social">
+    <li><a href={person.links.github}>GitHub</a></li>
+    <li><a href={person.links.linkedin}>LinkedIn</a></li>
+    <li><a href={person.links.x}>X</a></li>
+    <li><a href={person.links.peerlist}>Peerlist</a></li>
+    <li><a href="/yogesh-kumar-resume.pdf">Resume PDF</a></li>
+  </ul>
+</div>
+
+<style>
+  .tbc { padding: 20px 0 30px; }
+  .preview { margin: 0 0 18px; font-size: .78rem; letter-spacing: .24em; color: var(--accent-ink); }
+  /* the arrow-shaped end card: a long left-pointing tag */
+  .arrow {
+    display: inline-flex; align-items: center; height: clamp(64px, 9vw, 104px);
+    padding: 0 clamp(26px, 4vw, 52px) 0 clamp(60px, 8vw, 104px);
+    background: #121110; color: #f3ece0;
+    clip-path: polygon(0 50%, clamp(40px, 6vw, 76px) 0, 100% 0, 100% 100%, clamp(40px, 6vw, 76px) 100%);
+    box-shadow: none; max-width: 100%; box-sizing: border-box;
+  }
+  .arrow span { font: 400 clamp(1.7rem, 5.2vw, 4rem)/1 var(--display); letter-spacing: .04em; white-space: nowrap; }
+  .line { margin: 28px 0 10px; font-size: 1.15rem; color: var(--ink-2); }
+  /* sans, not a display face: 1 and l must stay distinguishable in an email address */
+  .mail { font: 600 clamp(1.3rem, 4vw, 2.1rem)/1.2 var(--sans); letter-spacing: -0.01em; color: var(--accent-ink); overflow-wrap: anywhere; }
+  .social { list-style: none; padding: 0; margin: 26px 0 0; display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: .95rem; font-weight: 600; }
+</style>

@@ -1,0 +1,95 @@
+---
+// Scroll choreography for the home page: Lenis smooth scroll + GSAP ScrollTrigger.
+// Everything here is progressive: without JS or with prefers-reduced-motion the page
+// is complete and static (html never gets the `motion` class).
+---
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import Lenis from 'lenis';
+
+  const root = document.documentElement;
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    gsap.registerPlugin(ScrollTrigger);
+    root.classList.add('motion');
+
+    const lenis = new Lenis({ lerp: 0.1 });
+    (window as unknown as { __lenis: Lenis }).__lenis = lenis;
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((t) => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+
+    // hold the page still while the cold open plays
+    const syncOp = () => (root.classList.contains('op') ? lenis.stop() : lenis.start());
+    new MutationObserver(syncOp).observe(root, { attributes: true, attributeFilter: ['class'] });
+    syncOp();
+
+    // ---- hero parallax ----
+    gsap.to('.ahero .fig', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: '.ahero', start: 'top top', end: 'bottom top', scrub: true } });
+    gsap.fromTo('.ahero .ghost', { xPercent: -50 }, { xPercent: -60, ease: 'none', scrollTrigger: { trigger: '.ahero', start: 'top top', end: 'bottom top', scrub: true } });
+
+    // ---- episode title cards ----
+    document.querySelectorAll<HTMLElement>('[data-ept]').forEach((el) => {
+      gsap.timeline({ scrollTrigger: { trigger: el, start: 'top 82%' } })
+        .from(el.querySelectorAll('.c'), { yPercent: 115, duration: 0.55, ease: 'power4.out', stagger: 0.022 })
+        .from(el.querySelector('.num'), { x: -70, opacity: 0, duration: 0.5, ease: 'power3.out' }, 0)
+        .from(el.querySelector('.bar'), { scaleX: 0, duration: 0.6, ease: 'power4.inOut' }, 0.1)
+        .from(el.querySelector('.jp'), { scale: 1.6, opacity: 0, duration: 0.45, ease: 'back.out(2.2)' }, 0.18);
+    });
+
+    // ---- character cards: rise in, stats count up ----
+    document.querySelectorAll<HTMLElement>('[data-card]').forEach((card) => {
+      gsap.from(card, { y: 90, rotate: -1.4, opacity: 0, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: card, start: 'top 90%' } });
+      card.querySelectorAll<HTMLElement>('[data-count]').forEach((dd) => {
+        const text = dd.textContent ?? '';
+        const nums = text.match(/\d[\d,]*/g);
+        if (nums?.length !== 1) return; // ranges like "16–80 → 5 GB" stay as written
+        const [pre, post] = text.split(nums[0]);
+        const target = Number(nums[0].replace(/,/g, ''));
+        const fmt = (v: number) => (nums[0].includes(',') ? v.toLocaleString('en-US') : String(v));
+        const o = { v: 0 };
+        dd.textContent = pre + fmt(0) + post;
+        gsap.to(o, {
+          v: target, duration: 1.3, ease: 'power2.out',
+          scrollTrigger: { trigger: card, start: 'top 75%' },
+          onUpdate: () => (dd.textContent = pre + fmt(Math.round(o.v)) + post),
+        });
+      });
+    });
+
+    // ---- origin story: pin the section and scroll the strip sideways ----
+    gsap.matchMedia().add('(min-width: 900px)', () => {
+      const section = document.querySelector<HTMLElement>('#story');
+      const strip = section?.querySelector<HTMLElement>('.strip');
+      if (!section || !strip) return;
+      const dist = () => Math.max(0, strip.scrollWidth - document.documentElement.clientWidth);
+      gsap.to(strip, {
+        x: () => -dist(), ease: 'none',
+        scrollTrigger: { trigger: section, start: 'top top', end: () => '+=' + dist(), pin: true, scrub: 0.8, invalidateOnRefresh: true },
+      });
+    });
+
+    // ---- credit bands: drift, faster with scroll speed, flip with scroll direction ----
+    document.querySelectorAll<HTMLElement>('[data-marquee]').forEach((band) => {
+      const track = band.querySelector<HTMLElement>('.track')!;
+      const dir = Number(band.dataset.marquee);
+      let x = 0, sign = 1;
+      gsap.ticker.add((_t, dt) => {
+        if (lenis.direction) sign = lenis.direction;
+        const speed = 1 + Math.min(10, Math.abs(lenis.velocity) * 0.4);
+        const half = track.scrollWidth / 2;
+        x = (x + dir * sign * speed * dt * 0.05) % half;
+        if (x > 0) x -= half;
+        track.style.transform = `translate3d(${x}px,0,0)`;
+      });
+    });
+
+    // ---- side quests and the end card ----
+    gsap.from('[data-sidequests] .cap', { y: -50, opacity: 0, stagger: 0.07, duration: 0.55, ease: 'back.out(2)', scrollTrigger: { trigger: '[data-sidequests]', start: 'top 86%' } });
+    gsap.from('[data-tbc]', { xPercent: 35, opacity: 0, duration: 0.8, ease: 'power4.out', scrollTrigger: { trigger: '[data-tbc]', start: 'top 88%' } });
+
+    // layout changes that move later triggers
+    document.fonts?.ready.then(() => ScrollTrigger.refresh());
+    document.querySelectorAll('details').forEach((d) => d.addEventListener('toggle', () => ScrollTrigger.refresh()));
+  }
+</script>

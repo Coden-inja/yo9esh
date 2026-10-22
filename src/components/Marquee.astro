@@ -1,0 +1,29 @@
+---
+// Two crossing credit bands (anime OP style). They drift on their own and
+// Motion.astro speeds them up / flips them with the visitor's scroll.
+import { achievements } from '../data/profile';
+const line = achievements.map((a) => `${a} ★ `).join('');
+---
+<div class="credits" aria-label={`Highlights: ${achievements.join(', ')}`}>
+  <div class="band red" data-marquee="-1" aria-hidden="true"><div class="track"><span>{line}</span><span>{line}</span></div></div>
+  <div class="band ink" data-marquee="1" aria-hidden="true"><div class="track"><span>{line}</span><span>{line}</span></div></div>
+</div>
+
+<style>
+  .credits { position: relative; height: 190px; margin: 10px 0 40px; overflow: hidden; }
+  .band {
+    position: absolute; left: -5%; width: 110%; top: 50%; padding: 12px 0;
+    font: 400 clamp(1.4rem, 3vw, 2.2rem)/1 var(--display); letter-spacing: .04em; text-transform: uppercase;
+    white-space: nowrap; overflow: hidden; border-block: 2px solid var(--ink);
+  }
+  .red { background: var(--accent); color: #121110; transform: translateY(-50%) rotate(-3deg); z-index: 1; }
+  .ink { background: #121110; color: #f3ece0; transform: translateY(-50%) rotate(2.5deg); }
+  .track { display: inline-flex; will-change: transform; }
+  .track span { padding-right: .4em; }
+  /* fallback drift when JS/motion is off */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html:not(.motion)) .red .track { animation: drift 40s linear infinite; }
+    :global(html:not(.motion)) .ink .track { animation: drift 46s linear infinite reverse; }
+  }
+  @keyframes drift { to { transform: translateX(-50%); } }
+</style>

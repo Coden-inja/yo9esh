@@ -1,0 +1,46 @@
+---
+// Section opener styled as an anime episode title card. Letters are pre-split so
+// Motion.astro can slam them in on scroll; without JS it simply renders.
+interface Props { ep: string; title: string; jp: string; sub?: string }
+const { ep, title, jp, sub } = Astro.props;
+const words = title.toUpperCase().split(' ');
+---
+<header class="ept" data-ept>
+  <span class="num" aria-hidden="true">EP.{ep}</span>
+  <h2 aria-label={title}>
+    {words.map((w) => (
+      <span class="w" aria-hidden="true">{[...w].map((c) => <span class="c">{c}</span>)}</span>
+    ))}
+  </h2>
+  <span class="jp" aria-hidden="true">{jp}</span>
+  <i class="bar" aria-hidden="true"></i>
+  {sub && <p class="sub mono">{sub}</p>}
+</header>
+
+<style>
+  /* title on the left, the big kanji in its own column so long titles never collide */
+  .ept { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 24px; align-items: center; padding: 18px 0 26px; margin-bottom: 44px; }
+  .ept > :not(.jp) { grid-column: 1; }
+  .num {
+    display: block; font: 400 clamp(3rem, 8vw, 6.5rem)/0.9 var(--display); letter-spacing: .02em;
+    color: transparent; -webkit-text-stroke: 2px var(--accent);
+  }
+  h2 {
+    position: relative; z-index: 1; margin: 2px 0 0; max-width: 11em;
+    font: 400 clamp(3.2rem, 9vw, 7.4rem)/0.9 var(--display); letter-spacing: .005em; color: var(--ink);
+  }
+  .w { display: inline-block; white-space: nowrap; margin-right: .22em; overflow: hidden; vertical-align: top; padding-top: .04em; }
+  .c { display: inline-block; }
+  .jp {
+    grid-column: 2; grid-row: 1 / span 4;
+    font: 900 clamp(3rem, 9vw, 8.5rem)/1 var(--jp); letter-spacing: -.04em;
+    color: var(--accent); pointer-events: none;
+  }
+  .bar { display: block; height: 10px; width: min(420px, 60%); margin-top: 18px; background: var(--accent); transform-origin: left; }
+  .sub { margin: 14px 0 0; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  @media (max-width: 720px) {
+    .ept { grid-template-columns: 1fr; }
+    .jp { position: absolute; right: 0; top: 10px; font-size: 3.2rem; }
+    .num { -webkit-text-stroke-width: 1.5px; }
+  }
+</style>

@@ -1,0 +1,70 @@
+---
+// Site-wide keyboard layer. Sections opt in with data-jump="1".."5"; any <kbd data-key>
+// on the page presses down with its key. `?` opens the keymap.
+---
+<div class="keymap" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" hidden>
+  <div class="panel">
+    <p class="kicker mono">キーマップ · keymap</p>
+    <ul>
+      <li><span><kbd>1</kbd>–<kbd>5</kbd></span> jump to an episode</li>
+      <li><span><kbd>a</kbd>–<kbd>z</kbd></span> type in the hero test</li>
+      <li><span><kbd>esc</kbd></span> restart the test / close</li>
+      <li><span><kbd>9</kbd></span> lo-fi music on / off</li>
+      <li><span><kbd>0</kbd></span> key clicks on / off</li>
+      <li><span><kbd>q</kbd> <kbd>w</kbd> <kbd>e</kbd> <kbd>r</kbd> <kbd>t</kbd></span> open a side quest (when it’s on screen)</li>
+      <li><span><kbd>?</kbd></span> this panel</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  import { click, clicksOn, setClicks } from '../lib/audio';
+  import { toggle } from '../lib/lofi';
+
+  const map = document.querySelector<HTMLElement>('.keymap')!;
+  const open = (on: boolean) => { map.hidden = !on; document.documentElement.classList.toggle('keymap-open', on); };
+  map.addEventListener('click', (e) => { if (e.target === map) open(false); });
+
+  function press(key: string, down: boolean) {
+    document.querySelectorAll(`kbd[data-key="${CSS.escape(key)}"]`).forEach((k) => k.classList.toggle('down', down));
+  }
+
+  addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || document.documentElement.classList.contains('op')) return;
+    if ((e.target as HTMLElement).closest('input, textarea, [contenteditable]')) return;
+    press(e.key.length === 1 ? e.key.toLowerCase() : e.key, true);
+
+    if (e.key === '?') { click(true); open(map.hidden); return; }
+    if (e.key === 'Escape' && !map.hidden) { open(false); return; }
+    if (e.key === '9') { click(true); toggle(); return; }
+    if (e.key === '0') { setClicks(!clicksOn()); click(true); return; }
+    const target = document.querySelector<HTMLElement>(`[data-jump="${e.key}"]`);
+    if (target) {
+      click(true);
+      const lenis = (window as unknown as { __lenis?: { scrollTo: (el: HTMLElement) => void } }).__lenis;
+      if (lenis) lenis.scrollTo(target); else target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+  addEventListener('keyup', (e) => press(e.key.length === 1 ? e.key.toLowerCase() : e.key, false));
+</script>
+
+<style>
+  .keymap {
+    position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px;
+    background: color-mix(in srgb, #121110 70%, transparent);
+  }
+  .keymap[hidden] { display: none; }
+  .panel {
+    width: min(520px, 100%); padding: 26px 28px; color: var(--ink); background: var(--surface);
+    border: 2px solid var(--ink); border-radius: 6px; box-shadow: 9px 9px 0 var(--accent);
+  }
+  .kicker { margin: 0 0 14px; font-size: .72rem; letter-spacing: .2em; color: var(--accent-ink); }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: .92rem; color: var(--ink-2); }
+  li { display: grid; grid-template-columns: 9.5rem 1fr; align-items: center; gap: 12px; }
+  kbd {
+    display: inline-block; min-width: 1.7em; text-align: center; padding: 1px 6px 0;
+    font: 600 .72rem/1.5 var(--mono); color: var(--ink); background: var(--bg);
+    border: 1.5px solid var(--ink); border-bottom-width: 3px; border-radius: 4px;
+  }
+  @media (max-width: 480px) { li { grid-template-columns: 1fr; gap: 2px; } }
+</style>

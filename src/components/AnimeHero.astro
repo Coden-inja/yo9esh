@@ -33,16 +33,18 @@ const WPM = 120; // Yogesh's own Monkeytype speed
     </div>
 
     <p class="keys mono">
-      <span><kbd data-key="1">1</kbd> work</span>
-      <span><kbd data-key="2">2</kbd> notes</span>
-      <span><kbd data-key="3">3</kbd> about</span>
-      <span><kbd data-key="0">0</kbd> sound <b class="snd">on</b></span>
-      <span><kbd data-key="Escape">esc</kbd> retry</span>
+      <span><kbd data-key="1">1</kbd> builds</span>
+      <span><kbd data-key="2">2</kbd> story</span>
+      <span><kbd data-key="9">9</kbd> lo-fi</span>
+      <span><kbd data-key="0">0</kbd> clicks <b class="snd">on</b></span>
+      <span><kbd data-key="?">?</kbd> all keys</span>
     </p>
   </div>
 </section>
 
 <script>
+  import { click, clicksOn } from '../lib/audio';
+
   const box = document.querySelector<HTMLElement>('.ahero .type')!;
   const hero = document.querySelector<HTMLElement>('.ahero')!;
   const chars = [...box.querySelectorAll<HTMLElement>('.ch')];
@@ -50,32 +52,10 @@ const WPM = 120; // Yogesh's own Monkeytype speed
   const target = Number(box.dataset.wpm);
   const $ = (s: string) => box.querySelector<HTMLElement>(s)!;
   const sink = box.querySelector<HTMLInputElement>('.sink')!;
-  const sndLabel = document.querySelector<HTMLElement>('.ahero .snd')!;
-
-  // ---- mechanical key click, synthesized (no audio files) ----
-  let sound = true;
-  try { sound = localStorage.getItem('sound') !== 'off'; } catch {}
-  sndLabel.textContent = sound ? 'on' : 'off';
-  let ctx: AudioContext | null = null;
-  let noise: AudioBuffer | null = null;
-  function click(heavy = false) {
-    if (!sound) return;
-    ctx ??= new AudioContext();
-    if (!noise) {
-      noise = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
-      const d = noise.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
-    }
-    const t = ctx.currentTime;
-    const src = ctx.createBufferSource(); src.buffer = noise;
-    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600 + Math.random() * 900; bp.Q.value = 1.4;
-    const g = ctx.createGain(); g.gain.setValueAtTime(heavy ? 0.5 : 0.32, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-    src.connect(bp).connect(g).connect(ctx.destination); src.start(t);
-    // the low "thock" of the key bottoming out
-    const o = ctx.createOscillator(); o.frequency.setValueAtTime(heavy ? 120 : 160, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.05);
-    const og = ctx.createGain(); og.gain.setValueAtTime(heavy ? 0.22 : 0.12, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-    o.connect(og).connect(ctx.destination); o.start(t); o.stop(t + 0.07);
-  }
+  const snd = document.querySelector<HTMLElement>('.ahero .snd')!;
+  const showClicks = () => (snd.textContent = clicksOn() ? 'on' : 'off');
+  addEventListener('clicks:change', showClicks);
+  showClicks();
 
   // ---- typing test ----
   let idx = 0, correct = 0, typed = 0, start = 0, done = false;
@@ -91,7 +71,7 @@ const WPM = 120; // Yogesh's own Monkeytype speed
     $('.wpm').textContent = String(wpm);
     $('.acc').textContent = String(typed ? Math.round((correct / typed) * 100) : 100);
     if (done) {
-      $('.state').textContent = wpm >= target ? `you beat me. respect.` : `done — ${target - wpm} wpm behind me`;
+      $('.state').textContent = wpm >= target ? 'you beat me. respect.' : `done — ${target - wpm} wpm behind me · esc to retry`;
       box.classList.add('finished');
     } else $('.state').textContent = start ? 'typing…' : 'type to start';
   }
@@ -117,29 +97,16 @@ const WPM = 120; // Yogesh's own Monkeytype speed
   let heroVisible = true;
   new IntersectionObserver(([e]) => { heroVisible = e.intersectionRatio > 0.35; }, { threshold: [0, 0.35, 1] }).observe(hero);
 
-  const jump: Record<string, string> = { '1': '#work', '2': '#notes', '3': '#about' };
-  function press(key: string, down: boolean) {
-    document.querySelector(`.ahero kbd[data-key="${key}"]`)?.classList.toggle('down', down);
-  }
-
   addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey || document.documentElement.classList.contains('op')) return;
+    if (document.documentElement.classList.contains('keymap-open')) return;
     const el = e.target as HTMLElement;
-    if (el !== sink && el.closest('input, textarea, [contenteditable]')) return;
-    press(e.key, true);
-    if (jump[e.key]) { click(true); document.querySelector(jump[e.key])?.scrollIntoView({ behavior: 'smooth' }); return; }
-    if (e.key === '0') {
-      sound = !sound; sndLabel.textContent = sound ? 'on' : 'off';
-      try { localStorage.setItem('sound', sound ? 'on' : 'off'); } catch {}
-      click(true); return;
-    }
+    if (!heroVisible || el === sink || el.closest('input, textarea, [contenteditable]')) return;
     if (e.key === 'Escape') { click(true); reset(); return; }
-    if (!heroVisible || el === sink) return; // the sink handles its own input (mobile)
     if (e.key === 'Backspace' || /^[a-z ]$/i.test(e.key)) {
       e.preventDefault(); click(e.key === ' '); type(e.key);
     }
   });
-  addEventListener('keyup', (e) => press(e.key, false));
 
   // phones: tap the box to bring up the keyboard; feed characters from a hidden input
   box.addEventListener('pointerdown', () => sink.focus());
@@ -166,6 +133,11 @@ const WPM = 120; // Yogesh's own Monkeytype speed
       var(--accent);
     clip-path: polygon(26% 0, 100% 0, 100% 100%, 0 100%);
   }
+  /* while the lo-fi plays, the slab kicks on every beat */
+  .slab { transition: filter .25s ease-out, background-position .25s ease-out; }
+  :global(html.beat) .slab { filter: brightness(1.12) saturate(1.1); background-position: 6px 0, 0 0; transition: none; }
+  @media (prefers-reduced-motion: reduce) { :global(html.beat) .slab { filter: none; background-position: 0 0; } }
+
   /* giant outlined name behind the figure */
   .ghost {
     position: absolute; z-index: -1; left: 50%; bottom: -0.16em; transform: translateX(-50%);
@@ -254,7 +226,7 @@ const WPM = 120; // Yogesh's own Monkeytype speed
     .fig { top: 84px; bottom: auto; right: 5%; height: min(56vh, 470px); filter: drop-shadow(6px 0 0 var(--ink)); }
     .ghost, .vkana { display: none; }
     .copy { width: auto; margin: 0 var(--gutter); padding: 96px 0 0; }
-    .copy > :not(.type) { max-width: calc(100% - min(38vw, 175px)); }
+    .copy > :not(.type) { max-width: calc(100% - min(44vw, 190px)); }
     .name { font-size: clamp(3.4rem, 15vw, 6rem); }
     .tag { font-size: 1rem; margin-bottom: max(24px, calc(min(56vh, 470px) - 300px)); }
     .type { box-shadow: 5px 5px 0 var(--ink); }

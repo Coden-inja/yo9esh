@@ -1,0 +1,54 @@
+---
+// Interactive projects as a row of oversized mechanical keycaps. While this row is on
+// screen, pressing the printed key opens that project.
+import { sideQuests } from '../data/profile';
+---
+<ul class="keyrow" data-sidequests>
+  {sideQuests.map((q) => (
+    <li>
+      <a class="cap" href={q.href} target="_blank" rel="noopener" data-quest={q.key}>
+        <span class="legend mono">{q.key.toUpperCase()}</span>
+        <span class="name">{q.name}</span>
+        <span class="what">{q.what}</span>
+      </a>
+    </li>
+  ))}
+</ul>
+
+<script>
+  import { click } from '../lib/audio';
+  const row = document.querySelector<HTMLElement>('[data-sidequests]')!;
+  let visible = false;
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.5 }).observe(row);
+  addEventListener('keydown', (e) => {
+    if (!visible || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+    if ((e.target as HTMLElement).closest('input, textarea, [contenteditable]')) return;
+    const cap = row.querySelector<HTMLAnchorElement>(`[data-quest="${e.key.toLowerCase()}"]`);
+    if (!cap) return;
+    cap.classList.add('down'); click(true);
+    setTimeout(() => cap.classList.remove('down'), 160);
+    window.open(cap.href, '_blank', 'noopener');
+  });
+  row.addEventListener('pointerdown', (e) => {
+    if ((e.target as HTMLElement).closest('.cap')) click(true);
+  });
+</script>
+
+<style>
+  .keyrow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .cap {
+    position: relative; display: flex; flex-direction: column; gap: 8px; height: 100%; box-sizing: border-box;
+    padding: 14px 16px 18px; min-height: 190px; text-decoration: none; color: var(--ink);
+    background: var(--surface); border: 2px solid var(--ink); border-radius: 12px;
+    border-bottom-width: 12px; /* the keycap's skirt */
+    box-shadow: inset 0 -4px 0 color-mix(in srgb, var(--ink) 10%, transparent);
+    transition: transform .07s, border-bottom-width .07s, background .15s;
+  }
+  .cap:hover { background: var(--accent-soft); color: var(--ink); }
+  .cap:active, .cap:global(.down) { transform: translateY(8px); border-bottom-width: 4px; }
+  .legend { font-size: 1.5rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .name { font: 400 1.5rem/1 var(--display); letter-spacing: .02em; text-transform: uppercase; margin-top: auto; }
+  .what { font-size: .82rem; color: var(--ink-2); line-height: 1.4; }
+  @media (max-width: 900px) { .keyrow { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 420px) { .keyrow { grid-template-columns: 1fr; } .cap { min-height: 0; } }
+</style>

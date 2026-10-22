@@ -1,0 +1,68 @@
+---
+// Origin story as a strip of manga panels. On wide screens Motion.astro pins the
+// section and scrolls the strip sideways; otherwise it's a normal horizontal scroller
+// (or a vertical stack on phones).
+import { Image } from 'astro:assets';
+import { episodes } from '../data/profile';
+import sih from '../assets/hero/sih-tone.png';
+
+const photos = { sih } as const;
+---
+<div class="strip-wrap" data-strip>
+  <ol class="strip">
+    {episodes.map((e, i) => (
+      <li class:list={['panel', { photo: e.photo, last: i === episodes.length - 1 }]}>
+        <span class="ep" aria-hidden="true">EP.{e.ep}</span>
+        <span class="jp" aria-hidden="true" lang="ja">{e.jp}</span>
+        <p class="when mono">{e.when}</p>
+        <h3>{e.title}</h3>
+        <p class="line">
+          {e.line}
+          {e.link && <> <a href={e.link.href}>{e.link.label} →</a></>}
+        </p>
+        {e.photo && (
+          <Image src={photos[e.photo as keyof typeof photos]} alt="Yogesh at the Smart India Hackathon 2024 Grand Finale" widths={[360, 680]} sizes="340px" class="shot" />
+        )}
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .strip-wrap { overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 0 22px; }
+  :global(html.motion) .strip-wrap { overflow: visible; }
+  .strip {
+    list-style: none; margin: 0;
+    /* first panel lines up with the page column; the strip runs full-bleed to the right */
+    padding: 0 var(--gutter) 0 max(var(--gutter), calc((100vw - var(--wrap)) / 2 + var(--gutter)));
+    display: flex; gap: 22px; width: max-content;
+  }
+  .panel {
+    position: relative; flex: none; width: 360px; min-height: 440px; box-sizing: border-box;
+    padding: 26px 24px 24px; scroll-snap-align: start; overflow: hidden;
+    background: var(--surface); border: 2px solid var(--ink); border-radius: 3px;
+    display: flex; flex-direction: column;
+  }
+  .panel:nth-child(odd) { transform: rotate(-.6deg); }
+  .panel:nth-child(even) { transform: rotate(.5deg); }
+  .panel.photo { width: 420px; }
+  .panel.last { background: var(--accent); color: #121110; border-color: #121110; }
+  .ep { font: 400 3.4rem/.9 var(--display); color: transparent; -webkit-text-stroke: 1.5px var(--accent); }
+  .last .ep { -webkit-text-stroke-color: #121110; }
+  .jp {
+    position: absolute; right: 14px; top: 18px; writing-mode: vertical-rl;
+    font: 900 2rem/1 var(--jp); letter-spacing: .06em; color: var(--ink); opacity: .9;
+  }
+  .when { margin: 18px 0 6px; font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); }
+  .last .when { color: #121110; }
+  h3 { margin: 0 0 12px; padding-right: 2.6rem; font: 400 2.1rem/.95 var(--display); letter-spacing: .01em; text-transform: uppercase; }
+  .line { margin: 0; font-size: .98rem; line-height: 1.55; color: var(--ink-2); }
+  .last .line { color: #121110; font-weight: 500; }
+  .shot { width: 100%; height: auto; margin-top: auto; padding-top: 16px; filter: drop-shadow(4px 4px 0 var(--ink)); }
+
+  @media (max-width: 720px) {
+    .strip-wrap { overflow: visible; }
+    .strip { flex-direction: column; width: auto; }
+    .panel, .panel.photo { width: auto; min-height: 0; transform: none !important; }
+  }
+</style>
