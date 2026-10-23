@@ -115,3 +115,15 @@ export function keyDown(e: KeyboardEvent, heavy = e.key === ' ') {
 export function keyUp(e: KeyboardEvent) {
   if (held.delete(e.code || e.key)) release(e.key === ' ');
 }
+
+/** Short bright arpeggio (C–E–G–C) for finishing the typing test. Plays even with key clicks off. */
+export function chime() {
+  const c = audio();
+  const t = c.currentTime;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+    const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+    const g = c.createGain(); const s = t + i * 0.075;
+    g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.18, s + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.5);
+    o.connect(g).connect(c.destination); o.start(s); o.stop(s + 0.55);
+  });
+}

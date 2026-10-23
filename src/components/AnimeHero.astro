@@ -46,7 +46,7 @@ const rays = Array.from({ length: N }, (_, i) => {
     <h1 class="name"><span>YOGESH</span> <span class="red">KUMAR</span></h1>
     <p class="tag">{person.role} who designs how the pieces connect.</p>
 
-    <div class="type" data-texts={JSON.stringify(TEXTS)} data-wpm={WPM} tabindex="0" role="group" aria-label="Typing test">
+    <div class="type" data-texts={JSON.stringify(TEXTS)} tabindex="0" role="group" aria-label="Typing test">
       <div class="words" aria-hidden="true">
         {[...TEXT].map((c) => <span class:list={['ch', { sp: c === ' ' }]}>{c === ' ' ? ' ' : c}</span>)}
       </div>
@@ -56,8 +56,9 @@ const rays = Array.from({ length: N }, (_, i) => {
         <span>wpm <b class="wpm">0</b></span>
         <span>acc <b class="acc">100</b>%</span>
         <button type="button" class="again" aria-label="New text">↻ new</button>
-        <span class="me">my best · {WPM} wpm</span>
+        <span class="me" hidden>your best · <b class="best">0</b> wpm</span>
       </p>
+      <div class="stamp" aria-hidden="true"><span lang="ja">ありがとう</span><small>thanks for typing</small></div>
     </div>
 
     <p class="keys mono">
@@ -72,7 +73,7 @@ const rays = Array.from({ length: N }, (_, i) => {
 </section>
 
 <script>
-  import { click, clicksOn, keyDown } from '../lib/audio';
+  import { click, clicksOn, keyDown, chime } from '../lib/audio';
 
   const box = document.querySelector<HTMLElement>('.ahero .type')!;
   const hero = document.querySelector<HTMLElement>('.ahero')!;
@@ -95,7 +96,6 @@ const rays = Array.from({ length: N }, (_, i) => {
     chars = [...words.querySelectorAll<HTMLElement>('.ch')];
     box.setAttribute('aria-label', `Typing test. Type: ${text}`);
   }
-  const target = Number(box.dataset.wpm);
   const $ = (s: string) => box.querySelector<HTMLElement>(s)!;
   const sink = box.querySelector<HTMLInputElement>('.sink')!;
   const snd = document.querySelector<HTMLElement>('.ahero .snd')!;
@@ -106,23 +106,44 @@ const rays = Array.from({ length: N }, (_, i) => {
   // ---- typing test ----
   let idx = 0, correct = 0, typed = 0, start = 0, done = false;
   const marks: boolean[] = [];
+  // WPM the way Monkeytype counts it: correctly typed characters (spaces included) / 5,
+  // per minute, from the first key press to the last one.
+  let end = 0, best = 0, tick = 0;
+  const wpmNow = () => {
+    const ms = (done ? end : performance.now()) - start;
+    return start && ms > 400 ? Math.round(correct / 5 / (ms / 60000)) : 0;
+  };
+  const accNow = () => (typed ? Math.round((correct / typed) * 100) : 100);
+  // kind words only, no comparisons
+  const praise = (w: number, a: number) =>
+    a === 100 && w >= 60 ? 'flawless. nice!' : w >= 90 ? 'blazing fast!' : w >= 60 ? 'fast hands!' : w >= 35 ? 'nice run!' : 'warmed up!';
   function render() {
     chars.forEach((c, i) => {
       c.classList.toggle('ok', i < idx && marks[i]);
       c.classList.toggle('bad', i < idx && !marks[i]);
       c.classList.toggle('cur', i === idx && !done);
     });
-    const mins = start ? (performance.now() - start) / 60000 : 0;
-    const wpm = mins > 0 ? Math.round(correct / 5 / mins) : 0;
-    $('.wpm').textContent = String(wpm);
-    $('.acc').textContent = String(typed ? Math.round((correct / typed) * 100) : 100);
-    if (done) {
-      $('.state').textContent = wpm >= target ? 'you beat me. respect.' : `${target - wpm} wpm behind me · tab to try another`;
-      box.classList.add('finished');
-    } else $('.state').textContent = start ? 'typing…' : 'type to start';
+    $('.wpm').textContent = String(wpmNow());
+    $('.acc').textContent = String(accNow());
+    if (done) $('.state').textContent = `${praise(wpmNow(), accNow())} · ${((end - start) / 1000).toFixed(1)}s · tab for another`;
+    else $('.state').textContent = start ? 'typing…' : 'type to start';
+  }
+  function finish() {
+    end = performance.now();
+    clearInterval(tick);
+    box.classList.add('finished');
+    const w = wpmNow();
+    if (w > best) {
+      best = w;
+      const me = $('.me');
+      me.hidden = false;
+      $('.best').textContent = String(best);
+    }
+    chime();
   }
   function reset() {
-    idx = correct = typed = start = 0; done = false; marks.length = 0;
+    idx = correct = typed = start = end = 0; done = false; marks.length = 0;
+    clearInterval(tick);
     box.classList.remove('finished'); load(); render();
   }
   function type(k: string) {
@@ -131,11 +152,11 @@ const rays = Array.from({ length: N }, (_, i) => {
       if (idx > 0) { idx--; if (marks[idx]) correct--; }
       render(); return;
     }
-    if (!start) start = performance.now();
+    if (!start) { start = performance.now(); tick = window.setInterval(render, 250); }
     const ok = k.toLowerCase() === text[idx];
     marks[idx] = ok; typed++; if (ok) correct++;
     idx++;
-    if (idx >= text.length) done = true;
+    if (idx >= text.length) { done = true; finish(); }
     render();
   }
 
@@ -233,11 +254,13 @@ const rays = Array.from({ length: N }, (_, i) => {
   }
   .type:focus-visible, .type:focus-within { box-shadow: 7px 7px 0 var(--accent); }
   .words { font: 500 1.22rem/1.65 var(--mono); color: var(--muted); letter-spacing: .01em; }
-  .ch { position: relative; transition: color .06s; }
-  .ch.ok { color: var(--ink); }
-  .ch.bad { color: var(--accent); text-decoration: underline 2px; text-underline-offset: 4px; }
-  .ch.sp.bad { background: var(--accent-soft); }
-  .ch.cur::before {
+  /* letters are created by the script (load()), so they don't carry Astro's scope attribute:
+     style them through :global() under the scoped .words */
+  .words :global(.ch) { position: relative; transition: color .06s; }
+  .words :global(.ch.ok) { color: var(--ink); }
+  .words :global(.ch.bad) { color: var(--accent); text-decoration: underline 2px; text-underline-offset: 4px; }
+  .words :global(.ch.sp.bad) { background: var(--accent-soft); }
+  .words :global(.ch.cur)::before {
     content: ''; position: absolute; left: -1px; top: .18em; bottom: .14em; width: 2px; background: var(--accent);
     animation: blink 1s steps(1) infinite;
   }
@@ -293,6 +316,22 @@ const rays = Array.from({ length: N }, (_, i) => {
     .words { font-size: 1.02rem; }
   }
 
+  /* finish: a red hanko seal stamps onto the box */
+  .type { overflow: visible; }
+  .stamp {
+    position: absolute; right: -18px; top: -26px; z-index: 2; pointer-events: none;
+    display: grid; place-items: center; width: 118px; height: 118px; border-radius: 50%;
+    border: 4px solid var(--accent); color: var(--accent); background: color-mix(in srgb, var(--bg) 85%, transparent);
+    text-align: center; opacity: 0; transform: scale(2.2) rotate(-24deg);
+  }
+  .stamp span { font: 900 1.15rem/1 var(--jp); letter-spacing: .02em; margin-top: 6px; }
+  .stamp small { font: 600 .5rem/1.2 var(--mono); letter-spacing: .14em; text-transform: uppercase; margin-top: -16px; }
+  .finished .stamp { animation: stamp .42s cubic-bezier(.2,1.6,.4,1) forwards; }
+  @keyframes stamp { 60% { opacity: 1; transform: scale(.9) rotate(-12deg); } 100% { opacity: 1; transform: scale(1) rotate(-12deg); } }
+  .finished { animation: thump .3s ease-out .12s; }
+  @keyframes thump { 40% { transform: translate(2px, 2px); box-shadow: 4px 4px 0 var(--accent); } }
+  .finished .wpm { color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .finished .stamp { animation: none; opacity: 1; transform: rotate(-12deg); } .finished { animation: none; } }
   .again {
     all: unset; cursor: pointer; font: 600 .72rem/1 var(--mono); color: var(--accent-ink);
     padding: 2px 6px; border: 1px solid currentColor; border-radius: 4px;
