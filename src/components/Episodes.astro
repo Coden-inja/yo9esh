@@ -5,8 +5,8 @@
 // is pinned and the strip scrolls sideways (Motion.astro). Phones: a vertical stack.
 import { Image } from 'astro:assets';
 import { episodes } from '../data/profile';
-// original-colour photos: SIH keeps its backdrop, the singing shot is a background-removed cutout
-import sih from '../assets/hero/sih-crop.png';
+// SIH: Yogesh in colour over a screentone backdrop (scripts/color-on-tone.mjs); singing: colour cutout
+import sih from '../assets/hero/sih-color.png';
 import sing from '../assets/hero/sing-color.png';
 
 type Ep = (typeof episodes)[number] & { photo?: string; special?: boolean; quote?: string; link?: { label: string; href: string } };
