@@ -2,7 +2,7 @@
 @import '@fontsource/instrument-serif/400-italic.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
-@import '@fontsource/anton';
+@import '@fontsource/bangers';
 @import '@fontsource/noto-sans-jp/900.css';
 
 :root {
@@ -18,7 +18,7 @@
   --yellow: #ffc21a;
 
   --serif: 'Instrument Serif', Georgia, serif;
-  --display: 'Anton', 'Impact', 'Arial Narrow Bold', sans-serif;
+  --display: 'Bangers', 'Impact', 'Arial Narrow Bold', sans-serif; /* slanted comic / manga lettering */
   --jp: 'Noto Sans JP', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', sans-serif;
   --sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', monospace;

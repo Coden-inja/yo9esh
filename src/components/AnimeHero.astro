@@ -7,6 +7,9 @@ import { person } from '../data/profile';
 
 // Lines for the typing test, a random one per load and per Tab restart. Lowercase letters and
 // spaces only (that's all the test accepts). Most are Yogesh's own words from his posts.
+// Hero depth layers, far → near (Firewatch-style): data-speed is how fast a layer moves with
+// the page on scroll-out (1 = with the page, below 1 lags behind, above 1 rushes past);
+// data-mouse is how many px it drifts with the pointer. Motion.astro drives both.
 const TEXTS = [
   'building is the one thing i never get bored of',
   'show your work early because it changes the outcome',
@@ -25,11 +28,6 @@ const rays = Array.from({ length: N }, (_, i) => {
   return `M${pt(a - w, 120)}L${pt(a, 1300)}L${pt(a + w, 120)}Z`;
 }).join('');
 ---
-<!--
-  Depth layers, far → near (Firewatch-style). data-speed is how fast a layer moves with the
-  page as you scroll out (1 = with the page, <1 = lags behind/far, >1 = rushes past/near);
-  data-mouse is how many px it drifts with the pointer. Motion.astro drives both.
--->
 <section class="ahero" id="top">
   <div class="layer l-rays" data-speed="0.25" data-mouse="4" aria-hidden="true">
     <svg class="rays" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><path d={rays} /></svg>

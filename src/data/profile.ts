@@ -73,10 +73,10 @@ export const systems: System[] = [
     featured: true,
     name: 'Chatterbox TTS Pipeline',
     date: 'Jul 2026',
-    title: 'From 48 GB accelerators to an 8 GB GPU',
+    title: 'From a 48 GB server GPU to an 8 GB gaming card',
     kicker: 'Chatterbox TTS pipeline · 2026',
     summary:
-      'Automated voiceovers for 2,655+ real-estate listings. Listing text is cleaned into speakable text, then voiced by Chatterbox, whose memory grew with input length until it needed 48 GB accelerators.',
+      'Automated voiceovers for 2,655+ real-estate listings. Listing text is cleaned into speakable text, then voiced by Chatterbox, whose memory grew with input length until it needed a 48 GB RTX A6000.',
     metrics: [
       { value: '16–80 → 5 GB', label: 'VRAM, any input length' },
       { value: '−87%', label: 'infra cost' },
@@ -109,7 +109,7 @@ export const systems: System[] = [
     resume: [
       'Rewrote S3Gen inference as bounded-memory chunked execution: VRAM went from 16 GB (48–80 GB on long inputs) to a stable ~5 GB at any length.',
       'Patched position overflows and token-boundary bugs, eliminating OOM crashes and voice hallucinations across 2,655+ automated listings.',
-      'Moved deployment from 48 GB accelerators to consumer GPUs (RTX 3070, RunPod), cutting infra cost by 87%.',
+      'Moved deployment from 48 GB RTX A6000 GPUs to 8 GB consumer RTX 3070s on RunPod, cutting infra cost by 87%.',
     ],
   },
   // Source: resume + Coden-inja/video-chunks abr_processor.py (probe, encoder pick, ladder,
@@ -181,7 +181,7 @@ export const systems: System[] = [
     constraint:
       'No high-spec laptop, and cloud free tiers kept rejecting card verification. The stack couldn’t even be tested locally.',
     decision:
-      'What I call CNG: the FastAPI backend runs in GitHub Codespaces (reached over SSH with the GitHub CLI), the LLM runs on Google Colab’s GPU, and ngrok tunnels expose both. The frontend sits on Vercel and the semantic engine with Coral on Render.',
+      'The FastAPI backend runs in GitHub Codespaces (reached over SSH with the GitHub CLI), the LLM runs on Google Colab’s GPU, and ngrok tunnels expose both. The frontend sits on Vercel and the semantic engine with Coral on Render.',
     tradeoff:
       'Colab sessions expire and tunnel URLs rotate, so it’s for building and testing. Once everything works, it moves to a persistent server.',
     stack: ['Next.js', 'FastAPI', 'Rust', 'Ollama', 'Docker', 'ngrok', 'ssh'],
