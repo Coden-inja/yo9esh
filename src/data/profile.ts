@@ -443,7 +443,7 @@ export const sideQuests = [
   { key: 'w', name: 'Moot Spiral', what: 'Photos + a song → a Fibonacci-spiral video', href: 'https://fibo-anim.vercel.app' },
   { key: 'e', name: 'Fullstack Odyssey', what: 'Watch the event loop, SQL joins and Git move', href: 'https://fullstack-odyssey.vercel.app' },
   { key: 'r', name: 'ClimaVisor', what: 'Spin a 3D globe of climate data', href: 'https://clima-visor.vercel.app' },
-  { key: 't', name: '3D Art Gallery', what: 'Walk a gallery in first person (WASD)', href: 'https://coden-inja.github.io/3D-art-gallery/' },
+  { key: 't', name: 'Lost & Found', what: 'Campus lost & found with a live map and AI auto-tagging', href: 'https://lost-and-found-pearl-theta.vercel.app' },
 ];
 
 // Scrolling credits band under the hero.

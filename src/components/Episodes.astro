@@ -5,11 +5,13 @@
 // is pinned and the strip scrolls sideways (Motion.astro). Phones: a vertical stack.
 import { Image } from 'astro:assets';
 import { episodes } from '../data/profile';
-import sih from '../assets/hero/sih-tone.png';
-import sing from '../assets/hero/sing-tone.png';
+// original-colour photos: SIH keeps its backdrop, the singing shot is a background-removed cutout
+import sih from '../assets/hero/sih-crop.png';
+import sing from '../assets/hero/sing-color.png';
 
 type Ep = (typeof episodes)[number] & { photo?: string; special?: boolean; quote?: string; link?: { label: string; href: string } };
 const photos = { sih, sing } as const;
+const cutouts = new Set(['sing']);
 const alts: Record<string, string> = {
   sih: 'Yogesh at the Smart India Hackathon 2024 Grand Finale',
   sing: 'Yogesh singing on stage, mic in hand',
@@ -46,7 +48,7 @@ const columns: { kind: 'pair' | 'photo' | 'finale'; eps: Ep[] }[] = [];
             </p>
             {e.quote && <p class="quote">“{e.quote}”</p>}
             {e.photo && (
-              <div class="shot-wrap">
+              <div class:list={['shot-wrap', { cutout: cutouts.has(e.photo) }]}>
                 <Image src={photos[e.photo as keyof typeof photos]} alt={alts[e.photo]} widths={[400, 800]} sizes="400px" class="shot" />
               </div>
             )}
@@ -87,12 +89,14 @@ const columns: { kind: 'pair' | 'photo' | 'finale'; eps: Ep[] }[] = [];
   /* photo column: the image takes whatever height is left under the text */
   .shot-wrap { flex: 1 1 auto; min-height: 120px; margin-top: 14px; overflow: hidden; border: 2px solid var(--ink); }
   .shot { width: 100%; height: 100%; object-fit: cover; object-position: 50% 25%; display: block; }
+  /* cutout: no frame, the figure stands on the panel itself */
+  .shot-wrap.cutout { border: 0; margin-bottom: -18px; }
+  .cutout .shot { object-fit: contain; object-position: 50% 100%; }
 
   /* special episode: inverted ink panel */
   .special { background: var(--ink); border-color: var(--ink); }
   .special .ep { -webkit-text-stroke-color: var(--bg); }
   .special .jp, .special .line, .special h3 { color: var(--bg); }
-  .special .shot-wrap { border-color: var(--accent); }
 
   /* finale: full red panel, the line set large and anchored to the bottom */
   .finale .panel { background: var(--accent); border-color: #121110; color: #121110; padding: 22px 26px; }
