@@ -5,7 +5,16 @@ import { Image } from 'astro:assets';
 import figure from '../assets/hero/yogesh-tone.png';
 import { person } from '../data/profile';
 
-const TEXT = 'yogesh builds products end to end and never gets bored of building';
+// Lines for the typing test, a random one per load and per Tab restart. Lowercase letters and
+// spaces only (that's all the test accepts). Most are Yogesh's own words from his posts.
+const TEXTS = [
+  'building is the one thing i never get bored of',
+  'show your work early because it changes the outcome',
+  'job descriptions are incomplete by default',
+  'do not wait to feel ready before you apply',
+  'every system is just boxes and the arrows between them',
+];
+const TEXT = TEXTS[0];
 const WPM = 120; // Yogesh's own Monkeytype speed
 
 // faint speed lines radiating from the figure's head (far background layer)
@@ -37,7 +46,7 @@ const rays = Array.from({ length: N }, (_, i) => {
     <h1 class="name"><span>YOGESH</span> <span class="red">KUMAR</span></h1>
     <p class="tag">{person.role} who designs how the pieces connect.</p>
 
-    <div class="type" data-text={TEXT} data-wpm={WPM} tabindex="0" role="group" aria-label={`Typing test. Type: ${TEXT}`}>
+    <div class="type" data-texts={JSON.stringify(TEXTS)} data-wpm={WPM} tabindex="0" role="group" aria-label="Typing test">
       <div class="words" aria-hidden="true">
         {[...TEXT].map((c) => <span class:list={['ch', { sp: c === ' ' }]}>{c === ' ' ? ' ' : c}</span>)}
       </div>
@@ -46,12 +55,14 @@ const rays = Array.from({ length: N }, (_, i) => {
         <span class="state">type to start</span>
         <span>wpm <b class="wpm">0</b></span>
         <span>acc <b class="acc">100</b>%</span>
-        <span class="me">yogesh · {WPM}</span>
+        <button type="button" class="again" aria-label="New text">↻ new</button>
+        <span class="me">my best · {WPM} wpm</span>
       </p>
     </div>
 
     <p class="keys mono">
-      <span><kbd data-key="1">1</kbd> builds</span>
+      <span><kbd data-key="Tab">tab</kbd> restart</span>
+      <span><kbd data-key="1">1</kbd> projects</span>
       <span><kbd data-key="2">2</kbd> story</span>
       <span><kbd data-key="9">9</kbd> lo-fi</span>
       <span><kbd data-key="0">0</kbd> clicks <b class="snd">on</b></span>
@@ -65,8 +76,25 @@ const rays = Array.from({ length: N }, (_, i) => {
 
   const box = document.querySelector<HTMLElement>('.ahero .type')!;
   const hero = document.querySelector<HTMLElement>('.ahero')!;
-  const chars = [...box.querySelectorAll<HTMLElement>('.ch')];
-  const text = box.dataset.text!;
+  const words = box.querySelector<HTMLElement>('.words')!;
+  const texts: string[] = JSON.parse(box.dataset.texts!);
+  let chars = [...box.querySelectorAll<HTMLElement>('.ch')];
+  let text = texts[0];
+  let last = 0;
+  // pick a different line than the current one and draw its letters
+  function load() {
+    let i = Math.floor(Math.random() * texts.length);
+    if (texts.length > 1 && i === last) i = (i + 1) % texts.length;
+    last = i; text = texts[i];
+    words.replaceChildren(...[...text].map((c) => {
+      const s = document.createElement('span');
+      s.className = c === ' ' ? 'ch sp' : 'ch';
+      s.textContent = c;
+      return s;
+    }));
+    chars = [...words.querySelectorAll<HTMLElement>('.ch')];
+    box.setAttribute('aria-label', `Typing test. Type: ${text}`);
+  }
   const target = Number(box.dataset.wpm);
   const $ = (s: string) => box.querySelector<HTMLElement>(s)!;
   const sink = box.querySelector<HTMLInputElement>('.sink')!;
@@ -89,13 +117,13 @@ const rays = Array.from({ length: N }, (_, i) => {
     $('.wpm').textContent = String(wpm);
     $('.acc').textContent = String(typed ? Math.round((correct / typed) * 100) : 100);
     if (done) {
-      $('.state').textContent = wpm >= target ? 'you beat me. respect.' : `done — ${target - wpm} wpm behind me · esc to retry`;
+      $('.state').textContent = wpm >= target ? 'you beat me. respect.' : `${target - wpm} wpm behind me · tab to try another`;
       box.classList.add('finished');
     } else $('.state').textContent = start ? 'typing…' : 'type to start';
   }
   function reset() {
     idx = correct = typed = start = 0; done = false; marks.length = 0;
-    box.classList.remove('finished'); render();
+    box.classList.remove('finished'); load(); render();
   }
   function type(k: string) {
     if (done) return;
@@ -120,19 +148,23 @@ const rays = Array.from({ length: N }, (_, i) => {
     if (document.documentElement.classList.contains('keymap-open')) return;
     const el = e.target as HTMLElement;
     if (!heroVisible || el === sink || el.closest('input, textarea, [contenteditable]')) return;
-    if (e.key === 'Escape') { keyDown(e, true); reset(); return; }
+    // Tab restarts with a new line, like Monkeytype. Only once the test has started, so
+    // keyboard users can still Tab through the page before they type anything.
+    if (e.key === 'Tab' && !e.shiftKey && (start || done)) { e.preventDefault(); keyDown(e, true); reset(); return; }
     if (e.key === 'Backspace' || /^[a-z ]$/i.test(e.key)) {
       e.preventDefault(); keyDown(e); type(e.key);
     }
   });
 
   // phones: tap the box to bring up the keyboard; feed characters from a hidden input
-  box.addEventListener('pointerdown', () => sink.focus());
+  box.querySelector('.again')!.addEventListener('click', (e) => { e.stopPropagation(); click(true); reset(); });
+  box.addEventListener('pointerdown', (e) => { if (!(e.target as HTMLElement).closest('.again')) sink.focus(); });
   sink.addEventListener('beforeinput', (e) => {
     e.preventDefault();
     if (e.inputType === 'deleteContentBackward') { click(); type('Backspace'); return; }
     for (const c of e.data ?? '') { click(c === ' '); type(c); }
   });
+  load();
   render();
 </script>
 
@@ -261,4 +293,10 @@ const rays = Array.from({ length: N }, (_, i) => {
     .words { font-size: 1.02rem; }
   }
 
+  .again {
+    all: unset; cursor: pointer; font: 600 .72rem/1 var(--mono); color: var(--accent-ink);
+    padding: 2px 6px; border: 1px solid currentColor; border-radius: 4px;
+  }
+  .again:hover { background: var(--accent); color: #121110; border-color: var(--accent); }
+  .again:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>

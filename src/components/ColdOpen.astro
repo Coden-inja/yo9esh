@@ -22,7 +22,7 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     <p class="g-kana" lang="ja" aria-hidden="true">ヨゲシュ・クマール</p>
     <p class="g-title" aria-hidden="true">YO<span>9</span>ESH</p>
     <div class="press">
-      <p class="g-cta mono" aria-hidden="true">press any key<i class="caret"></i></p>
+      <p class="g-cta mono" aria-hidden="true"><span class="on-keys">press any key</span><span class="on-touch">tap to start</span><i class="caret"></i></p>
       <button class="cap" type="button" data-start aria-label="Enter the site with sound">
         <span class="cap-top"><span class="cap-legend">ENTER</span><span class="cap-sub" aria-hidden="true">↵</span></span>
       </button>
@@ -236,4 +236,11 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
   @keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes shake { 0% { transform: translate(6px, -4px); } 50% { transform: translate(-5px, 4px); } 100% { transform: none; } }
 
+  /* phones and tablets have no keyboard: say "tap" there */
+  .on-touch { display: none; }
+  @media (hover: none) and (pointer: coarse) {
+    .on-keys { display: none; }
+    .on-touch { display: inline; }
+    .muted kbd { display: none; }
+  }
 </style>
