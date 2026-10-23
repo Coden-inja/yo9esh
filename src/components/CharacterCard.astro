@@ -27,16 +27,16 @@ const num = String(index + 1).padStart(2, '0');
 
     <div class="moves">
       <div class="move">
-        <h4><span class="k" lang="ja">敵</span> The enemy</h4>
+        <h4>Problem</h4>
         <p>{s.constraint}</p>
       </div>
       <div class="move">
-        <h4><span class="k" lang="ja">必殺技</span> Special move</h4>
+        <h4>What I did</h4>
         <p>{s.decision}</p>
       </div>
       {s.tradeoff && (
         <div class="move">
-          <h4><span class="k" lang="ja">弱点</span> The catch</h4>
+          <h4>Tradeoff</h4>
           <p>{s.tradeoff}</p>
         </div>
       )}
@@ -50,7 +50,7 @@ const num = String(index + 1).padStart(2, '0');
     </footer>
 
     <details class="inspect">
-      <summary class="mono">Inspect the system</summary>
+      <summary class="mono">Architecture</summary>
       <Flow graph={s.diagram} id={s.id} />
     </details>
   </div>

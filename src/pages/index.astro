@@ -24,13 +24,13 @@ const more = systems.filter((s) => !s.featured);
   <Marquee />
 
   <section id="work" class="wrap" data-jump="1">
-    <EpTitle ep="01" title="The Builds" jp="作品" sub={`${systems.length} systems · ${featured.length} featured`} />
+    <EpTitle ep="01" title="Projects" jp="作品" />
     {featured.map((s, i) => <CharacterCard system={s} index={i} stars={stars} />)}
     {more.length > 0 && (
       <details class="more">
         <summary>
-          <span class="open-label">Unlock {more.length} more builds</span>
-          <span class="close-label">Hide them again</span>
+          <span class="open-label">{more.length} more projects</span>
+          <span class="close-label">Show less</span>
           <span class="names mono">{more.map((s) => (s.name ?? s.title).split(/ · |,/)[0]).join(' · ')}</span>
         </summary>
         {more.map((s, i) => <CharacterCard system={s} index={featured.length + i} stars={stars} />)}
@@ -39,12 +39,12 @@ const more = systems.filter((s) => !s.featured);
   </section>
 
   <section id="story" data-jump="2">
-    <div class="wrap"><EpTitle ep="02" title="Origin Story" jp="物語" sub="seven episodes · keep scrolling →" compact /></div>
+    <div class="wrap"><EpTitle ep="02" title="Story" jp="物語" compact /></div>
     <Episodes />
   </section>
 
   <section id="side" class="wrap" data-jump="3">
-    <EpTitle ep="03" title="Side Quests" jp="寄り道" sub="things you can play with · press q w e r t" />
+    <EpTitle ep="03" title="Try these" jp="遊び" />
     <SideQuests />
   </section>
 
