@@ -38,7 +38,7 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
 </div>
 
 <script>
-  import { ready, whoosh, impact, click, setClicks } from '../lib/audio';
+  import { audio, ready, whoosh, impact, click, setClicks } from '../lib/audio';
   import { play } from '../lib/lofi';
 
   const root = document.documentElement;
@@ -48,13 +48,9 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
   let stage: 'gate' | 'play' | 'done' = 'gate';
   let timers: number[] = [];
 
-  // Watchdog: if intro takes more than 3.5s total or gets stuck, force finish cleanly
-  const watchdog = window.setTimeout(() => {
-    if (stage !== 'done' && root.classList.contains('op')) {
-      log('Watchdog triggered: forcing intro to complete');
-      finish(false);
-    }
-  }, 3500);
+  // Watchdog: armed only once the OP sequence starts (never while the title screen is
+  // waiting for a key), and it keeps the visitor's sound choice.
+  let watchdog = 0;
 
   function finish(withSound: boolean) {
     if (stage === 'done') return;
@@ -63,7 +59,11 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     timers.forEach(clearTimeout);
     log('Finish called, transitioning to home');
     root.classList.add('op-out', 'ready');
-    if (withSound) play();
+    if (withSound) {
+      play();
+      // if the browser still hasn't let audio run, tell the player to ask for a tap
+      setTimeout(() => { if (audio().state !== 'running') { log('audio still blocked'); dispatchEvent(new CustomEvent('audio:blocked')); } }, 600);
+    }
     setTimeout(() => root.classList.remove('op', 'op-play', 'op-out'), 560);
   }
 
@@ -72,9 +72,13 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     stage = 'play';
     log('Enter called, withSound:', withSound);
     if (!withSound) setClicks(false);
+    let started = false;
     const go = () => {
+      if (started) return;
+      started = true;
       root.classList.add('op-play');
       timers = [window.setTimeout(() => finish(withSound), 2700)];
+      watchdog = window.setTimeout(() => { log('Watchdog: forcing finish'); finish(withSound); }, 4200);
     };
     if (!withSound) { go(); return; }
     // Sounds are triggered by the animations themselves (animationstart fires when each
@@ -89,8 +93,10 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     cue('.cold .kana', 'kana', () => whoosh(0, 0.5));
     cue('.cold .t1', 'slam', () => impact(0, 1));
     cue('.cold .t2', 'wipe', () => impact(0, 0.5));
-    // the audio clock only starts after this gesture, so wait for it before rolling
-    ready().then(() => { click(true); go(); }, go);
+    // The audio clock only starts after this gesture, so wait for it before rolling, but never
+    // longer than 400 ms: if a browser keeps audio blocked, the intro still plays (silently).
+    ready().then((c) => { log('audio', c.state); click(true); go(); }, (err) => { log('audio blocked', err); go(); });
+    window.setTimeout(go, 400);
   }
 
   addEventListener('keydown', (e) => {
@@ -107,7 +113,6 @@ const rays = Array.from({ length: RAYS }, (_, i) => {
     if (stage === 'gate') enter(true); else if (stage === 'play') finish(true);
   });
   if (!root.classList.contains('op')) {
-    clearTimeout(watchdog);
     root.classList.add('ready');
   } else {
     (document.querySelector('[data-start]') as HTMLElement).focus({ preventScroll: true });

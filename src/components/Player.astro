@@ -17,6 +17,7 @@
 
 <script>
   import { toggle, isPlaying, getAnalyser } from '../lib/lofi';
+  import { audio } from '../lib/audio';
 
   const el = document.querySelector<HTMLElement>('.player')!;
   const btn = el.querySelector<HTMLButtonElement>('.disc')!;
@@ -32,7 +33,19 @@
     raf = requestAnimationFrame(draw);
   }
 
-  btn.addEventListener('click', () => toggle());
+  const nowLabel = el.querySelector<HTMLElement>('.now')!;
+  // Some browsers/devices keep audio blocked even after the title-screen key press (e.g. strict
+  // autoplay settings). Then the player says so, and the next tap on it unlocks the sound.
+  addEventListener('audio:blocked', () => { el.classList.add('blocked'); nowLabel.textContent = 'tap for sound'; });
+  btn.addEventListener('click', () => {
+    if (el.classList.contains('blocked')) {
+      void audio().resume();
+      el.classList.remove('blocked'); nowLabel.textContent = 'now playing';
+      if (!isPlaying()) toggle();
+      return;
+    }
+    toggle();
+  });
   addEventListener('lofi:change', (e) => {
     const on = (e as CustomEvent<boolean>).detail;
     el.classList.toggle('on', on);
@@ -101,4 +114,7 @@
     .meta, .eq, .hint { display: none; }
   }
   @media (hover: none) { .hint { display: none; } }
+  .blocked { animation: nudge 1.2s ease-in-out infinite; }
+  .blocked .now { color: var(--accent); }
+  @keyframes nudge { 50% { transform: translateY(-4px); } }
 </style>

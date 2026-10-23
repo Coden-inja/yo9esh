@@ -1,8 +1,8 @@
 ---
 // Contact, as the anime "to be continued" end card + next-episode preview, with the
-// final frame anime endings freeze on: Yogesh on stage, mic in hand.
+// final frame anime endings freeze on: Yogesh in colour against a screentone background.
 import { Image } from 'astro:assets';
-import face from '../assets/hero/yellow-tone.png';
+import face from '../assets/hero/yellow-color.png'; // colour person over screentone (scripts/color-on-tone.mjs)
 import { person } from '../data/profile';
 ---
 <div class="tbc">
@@ -20,7 +20,7 @@ import { person } from '../data/profile';
     </ul>
   </div>
   <figure class="face">
-    <Image src={face} alt="Yogesh smiling in yellow kurta, drawn in manga screentone" width={320} height={444} densities={[1, 2]} />
+    <Image src={face} alt="Yogesh smiling in a yellow kurta at an old iron gate" width={320} height={444} densities={[1, 2]} />
     <figcaption lang="ja">つづく</figcaption>
   </figure>
 </div>
