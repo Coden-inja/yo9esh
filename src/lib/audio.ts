@@ -127,3 +127,13 @@ export function chime() {
     o.connect(g).connect(c.destination); o.start(s); o.stop(s + 0.55);
   });
 }
+
+// Pause all sound while the page isn't visible (another tab, minimised, phone locked) and pick
+// up where it left off on return. Suspending the context freezes the lo-fi clock too, so the
+// beat resumes in time instead of skipping ahead.
+let pausedByVisibility = false;
+document.addEventListener('visibilitychange', () => {
+  if (!ctx) return;
+  if (document.hidden && ctx.state === 'running') { pausedByVisibility = true; void ctx.suspend(); }
+  else if (!document.hidden && pausedByVisibility) { pausedByVisibility = false; void ctx.resume(); }
+});

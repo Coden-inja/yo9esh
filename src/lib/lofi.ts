@@ -150,3 +150,11 @@ export function stop() {
 }
 
 export const toggle = () => (playing ? stop() : play());
+
+// Stop the loop while the page is hidden (other tab, minimised, phone locked) and start it
+// again on return, but only if it was playing when the visitor left.
+let resumeOnShow = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { resumeOnShow = playing; if (playing) stop(); }
+  else if (resumeOnShow) { resumeOnShow = false; play(); }
+});
