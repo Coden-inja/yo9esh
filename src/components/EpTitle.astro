@@ -29,7 +29,10 @@ const words = title.toUpperCase().split(' ');
     position: relative; z-index: 1; margin: 2px 0 0; max-width: 11em;
     font: 400 clamp(3.2rem, 9vw, 7.4rem)/0.9 var(--display); letter-spacing: .005em; color: var(--ink);
   }
-  .w { display: inline-block; white-space: nowrap; margin-right: .22em; overflow: hidden; vertical-align: top; padding-top: .04em; }
+  /* overflow:hidden is the mask for the slam-in; Bangers leans right and has tall caps, so give
+     the mask room on the right and top (padding) and take it back with negative margins */
+  .w { display: inline-block; white-space: nowrap; overflow: hidden; vertical-align: top;
+       padding: .1em .16em .02em .04em; margin: -.1em .06em -.02em -.04em; }
   .c { display: inline-block; }
   .jp {
     grid-column: 2; grid-row: 1 / span 4;
