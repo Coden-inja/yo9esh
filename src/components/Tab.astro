@@ -1,0 +1,100 @@
+---
+// The red pixel cat lives in the favicon; the title is its text track. Every ~20 s the cat runs
+// out of the icon's right edge into the title as a text cat (ᓚᘏᗢ, paw prints ฅ behind it), to the
+// far end and back, sometimes typing "meow" before it runs into the icon again. While the lo-fi plays
+// it bobs to the beat; while the tab is hidden it is asleep: zZ in the icon, z/zz/zzz in the title.
+// The animations replace the whole title so they fit a narrow tab, and after the first run the
+// resting title is the cat too. The real <title> in the HTML (what link previews read) never
+// changes, and the name stays in the tab for the first ~9 s, while search crawlers render the
+// page. Static fallback: public/favicon.svg.
+---
+<script>
+  import { cat, type CatFrame } from '../lib/cat';
+
+  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"][type="image/svg+xml"]');
+  const baseTitle = document.title;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let last = '';
+  const icon = (frame: CatFrame, o: Parameters<typeof cat>[1] = {}) => {
+    const svg = cat(frame, o);
+    if (!link || svg === last) return;
+    last = svg;
+    link.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+  };
+  const title = (s: string) => { if (document.title !== s) document.title = s; };
+
+  let busy = false; // running or asleep
+  let music = false;
+  let named = true; // the name stays until the first run is over, then the tab is the cat's
+  const restTitle = () => (named ? baseTitle : 'ᓚᘏᗢ');
+  const rest = () => { icon('sit'); title(restTitle()); };
+
+  // lo-fi: the cat bobs on every beat (the browser shows its own speaker icon)
+  addEventListener('lofi:change', (e) => { music = (e as CustomEvent<boolean>).detail; });
+  addEventListener('lofi:beat', () => {
+    if (calm || busy || !music) return;
+    icon('sit', { y: -4 });
+    setTimeout(() => { if (!busy) icon('sit'); }, 150);
+  });
+
+  // a blink now and then
+  setInterval(() => {
+    if (busy || document.hidden) return;
+    icon('sitBlink');
+    setTimeout(() => { if (!busy) icon('sit'); }, 160);
+  }, 4200);
+
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const away = () => document.hidden;
+
+  // the text cat on a dotted track ahead of the title, a paw print behind it.
+  // ᓚᘏᗢ faces right (head ᗢ), ᗢᘏᓗ faces left.
+  const SLOTS = 12;
+  const track = (i: number, right: boolean) =>
+    Array.from({ length: SLOTS }, (_, k) => {
+      if (k === i) return right ? 'ᓚᘏᗢ' : 'ᗢᘏᓗ';
+      const behind = right ? i - k : k - i;
+      return behind === 2 ? 'ฅ' : '·';
+    }).join('');
+
+  // back at the start the cat says it, typed like the typing test: letter by letter, then backspaced
+  async function meow() {
+    const word = 'meow';
+    for (let n = 1; n <= word.length && !away(); n++) { title(`ᗢᘏᓗ ${word.slice(0, n)}_`); await wait(150); }
+    await wait(1000);
+    for (let n = word.length - 1; n >= 0 && !away(); n--) { title(`ᗢᘏᓗ ${word.slice(0, n)}_`); await wait(60); }
+  }
+
+  // the run: out of the icon to the right, paw prints along the title and back, in again
+  async function run() {
+    if (busy || away()) return;
+    busy = true;
+    let f = 0;
+    const step = (flip: boolean, x: number) => icon(f++ % 2 ? 'runB' : 'runA', { x, flip });
+    for (let x = 0; x <= 64 && !away(); x += 4) { step(true, x); await wait(70); }
+    for (let i = 0; i < SLOTS && !away(); i++) { title(track(i, true)); await wait(180); }
+    for (let i = SLOTS - 1; i >= 0 && !away(); i--) { title(track(i, false)); await wait(180); }
+    if (Math.random() < 0.5) await meow();
+    named = false;
+    title(restTitle());
+    for (let x = 64; x >= 0 && !away(); x -= 4) { step(false, x); await wait(70); }
+    busy = false;
+    if (!away()) rest();
+  }
+  if (!calm) setTimeout(function loop() { run(); setTimeout(loop, 18000 + Math.random() * 6000); }, 5000);
+
+  // hidden tab: asleep, zZ in the icon and z / zz / zzz in the title; back: awake
+  let zzTimer = 0, zz = 1;
+  const sleep = () => { icon('sleep', { zz }); title('z'.repeat(((zz - 1) % 3) + 1)); };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      busy = true; zz = 1; sleep();
+      zzTimer = window.setInterval(() => { zz = (zz % 4) + 1; sleep(); }, 1000);
+    } else {
+      clearInterval(zzTimer); busy = false; rest();
+    }
+  });
+
+  rest();
+</script>

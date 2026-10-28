@@ -1,10 +1,9 @@
 // Builds the site, serves it, and renders the generated assets with headless Chrome:
 //   /resume → public/yogesh-kumar-resume.pdf
 //   /og     → public/og.jpg              (1200×630 link-preview card)
-//   favicon → public/apple-touch-icon.png
 // Re-run whenever src/data/profile.ts or the card design changes, then commit public/.
 import { spawn, execFileSync } from 'node:child_process';
-import { existsSync, copyFileSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, copyFileSync, mkdtempSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import sharp from 'sharp';
@@ -12,7 +11,6 @@ import sharp from 'sharp';
 const PORT = 4329;
 const PDF = resolve('public/yogesh-kumar-resume.pdf');
 const OG = resolve('public/og.jpg');
-const TOUCH = resolve('public/apple-touch-icon.png');
 
 const browsers = [
   process.env.CHROME_PATH,
@@ -47,11 +45,8 @@ try {
   await sharp(shot).resize(1200, 630).jpeg({ quality: 86, mozjpeg: true }).toFile(OG);
   console.log(`✓ ${OG} (${Math.round(statSync(OG).size / 1024)} KB)`);
 
-  await sharp(readFileSync(resolve('public/favicon.svg')), { density: 600 }).resize(180, 180).png().toFile(TOUCH);
-  console.log(`✓ ${TOUCH}`);
-
   // keep dist in sync so a deploy of this build ships the fresh files
-  for (const f of [PDF, OG, TOUCH]) copyFileSync(f, resolve('dist', f.split(/[\\/]/).pop()));
+  for (const f of [PDF, OG]) copyFileSync(f, resolve('dist', f.split(/[\\/]/).pop()));
 } finally {
   if (process.platform === 'win32') {
     try { execFileSync('taskkill', ['/pid', String(server.pid), '/T', '/F'], { stdio: 'ignore' }); } catch {}

@@ -122,6 +122,7 @@ const rays = Array.from({ length: N }, (_, i) => {
       c.classList.toggle('cur', i === idx && !done);
     });
     $('.wpm').textContent = String(wpmNow());
+    if (start && !done) dispatchEvent(new CustomEvent('typing:progress', { detail: { wpm: wpmNow() } }));
     $('.acc').textContent = String(accNow());
     if (done) $('.state').textContent = `${praise(wpmNow(), accNow())} · ${((end - start) / 1000).toFixed(1)}s · tab for another`;
     else $('.state').textContent = start ? 'typing…' : 'type to start';
@@ -138,11 +139,13 @@ const rays = Array.from({ length: N }, (_, i) => {
       $('.best').textContent = String(best);
     }
     chime();
+    dispatchEvent(new CustomEvent('typing:done', { detail: { wpm: wpmNow(), acc: accNow() } }));
   }
   function reset() {
     idx = correct = typed = start = end = 0; done = false; marks.length = 0;
     clearInterval(tick);
     box.classList.remove('finished'); load(); render();
+    dispatchEvent(new CustomEvent('typing:reset'));
   }
   function type(k: string) {
     if (done) return;

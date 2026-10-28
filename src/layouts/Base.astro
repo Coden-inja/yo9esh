@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { person } from '../data/profile';
+import Tab from '../components/Tab.astro';
 
 interface Props {
   title?: string;
@@ -66,6 +67,7 @@ const personLd = {
     <meta name="theme-color" content="#faf7f0" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#131210" media="(prefers-color-scheme: dark)" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     {Astro.url.pathname === '/' && <script type="application/ld+json" set:html={JSON.stringify(personLd)} />}
@@ -100,6 +102,7 @@ const personLd = {
       </header>
     )}
     <main><slot /></main>
+    {!bare && <Tab />}
     {!bare && (
       <footer class="wrap foot">
         <span>© {new Date().getFullYear()} {person.name}</span>
