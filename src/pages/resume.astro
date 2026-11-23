@@ -31,7 +31,6 @@ const site = strip(Astro.site?.toString() ?? '');
       </div>
       <ul class="contact">
         <li><a href={`mailto:${person.email}`}>{person.email}</a></li>
-        {person.showPhoneOnResume && <li>{person.phone}</li>}
         <li><a href={`https://${site}`}>{site}</a></li>
         <li><a href={person.links.github}>{strip(person.links.github)}</a></li>
         <li><a href={person.links.linkedin}>linkedin.com/in/yogesh-kumar</a></li>

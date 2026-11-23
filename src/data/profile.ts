@@ -34,8 +34,6 @@ export const person = {
   location: 'Kolkata · from Gaya, Bihar',
   now: 'SDE intern at SystemStar Infotech · B.Tech CSE at Heritage Institute of Technology, ’28',
   email: 'fbyogesh111@gmail.com',
-  phone: '+91-6204299438',
-  showPhoneOnResume: true, // the website never shows the phone number
   links: {
     github: 'https://github.com/Coden-inja',
     linkedin: 'https://www.linkedin.com/in/yogesh-kumar-299298260/',
